@@ -1,3 +1,4 @@
+import { Role } from "../generated/prisma/enums.js";
 import { prisma } from "../lib/prisma.js";
 import { ApiError } from "../utils/api-error.js";
 
@@ -5,7 +6,7 @@ type CreateUserBody = {
   name: string;
   email: string;
   password: string;
-  role?: "SUPER_ADMIN" | "ADMIN" | "USER"; 
+  role?: Role; 
 };
 
 type UpdateUserBody = {
