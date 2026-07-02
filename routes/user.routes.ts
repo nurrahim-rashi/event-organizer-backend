@@ -8,7 +8,7 @@ import {
 } from "../controllers/user.controller.js";
 import { createUserValidator } from "../validators/user.validator.js";
 
-const userRoutes = express.Router();
+export const userRoutes = express.Router();
 
 userRoutes.get("/", getUsersController);
 userRoutes.get("/:id", getUserController);
