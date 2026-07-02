@@ -5,6 +5,7 @@ type CreateUserBody = {
   name: string;
   email: string;
   password: string;
+  role?: "SUPER_ADMIN" | "ADMIN" | "USER"; 
 };
 
 type UpdateUserBody = {
@@ -42,7 +43,7 @@ export const createUserService = async (body: CreateUserBody) => {
       name: body.name,
       email: body.email,
       password: body.password,
-      role: "USER",
+      role: body.role || "USER",
       referralCode: generateReferralCode(),
     },
   });

@@ -15,3 +15,5 @@ userRoutes.get("/:id", getUserController);
 userRoutes.post("/", createUserValidator, createUserController);
 userRoutes.patch("/:id", updateUserController);
 userRoutes.delete("/:id", deleteUserController);
+
+export {userRoutes}
