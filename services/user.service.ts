@@ -1,3 +1,4 @@
+import { Role } from "../generated/prisma/enums.js";
 import { prisma } from "../lib/prisma.js";
 import { ApiError } from "../utils/api-error.js";
 
@@ -5,6 +6,7 @@ type CreateUserBody = {
   name: string;
   email: string;
   password: string;
+  role?: Role; 
 };
 
 type UpdateUserBody = {
@@ -42,7 +44,7 @@ export const createUserService = async (body: CreateUserBody) => {
       name: body.name,
       email: body.email,
       password: body.password,
-      role: "USER",
+      role: body.role || "USER",
       referralCode: generateReferralCode(),
     },
   });
