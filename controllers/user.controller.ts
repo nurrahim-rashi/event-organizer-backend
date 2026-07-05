@@ -6,6 +6,8 @@ import {
   updateUserService,
   deleteUserService,
 } from "../services/user.service.js";
+import { cloudinaryUpload } from "../utils/cloudinary.js";
+import { upload } from "../middlewares/multer.js";
 
 export const getUsersController = async (
   req: Request,
@@ -68,7 +70,14 @@ export const updateUserController = async (
   try {
     const id = Number(req.params.id);
 
-    const result = await updateUserService(id, req.body);
+    const body = {...req.body};
+
+    if (req.file) {
+      const uploadResult = await cloudinaryUpload(req.file);
+      body.profilePic = uploadResult.secure_url;
+    }
+
+    const result = await updateUserService(id, body);
 
     res.status(200).json({
       success: true,
