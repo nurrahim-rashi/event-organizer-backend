@@ -33,6 +33,14 @@ enum TransactionStatus {
   DONE
 }
 
+enum TicketName {
+  GOLD
+  SILVER
+  BRONZE
+  EARLY_BIRD
+  }
+
+
 model User {
   id              Int      @id @default(autoincrement())
   name            String
@@ -86,7 +94,7 @@ model Event {
 
 model TicketType {
   id           Int      @id @default(autoincrement())
-  name         String
+  name         TicketName
   price        Int
   booked       Int      @default(0)
   totalTicket  Int

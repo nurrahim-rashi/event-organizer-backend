@@ -13,12 +13,8 @@ export const getEventsController = async (
   next: NextFunction,
 ) => {
   try {
-    const events = await getEventsService();
-
-    res.status(200).json({
-      success: true,
-      data: events,
-    });
+    const result = await getEventsService(req.query);
+    return res.status(200).json(result);
   } catch (err) {
     next(err);
   }
