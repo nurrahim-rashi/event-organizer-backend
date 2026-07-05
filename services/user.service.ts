@@ -13,6 +13,7 @@ type UpdateUserBody = {
   name?: string;
   email?: string;
   password?: string;
+  profilePic? : string;
 };
 
 type DeleteUserResponse = {
@@ -70,6 +71,7 @@ export const updateUserService = async (id: number, body: UpdateUserBody) => {
       name: body.name,
       email: body.email,
       password: body.password,
+      profilePic: body.profilePic,
     },
   });
 
