@@ -15,9 +15,9 @@ export const cloudinaryUpload = (file: Express.Multer.File): Promise<any> => {
       (error, result) => {
         if (error) return reject(error);
         resolve(result);
-      }
+      },
     );
-    
+
     // Mengirim file mentah yang ada di RAM ke Cloudinary
     uploadStream.end(file.buffer);
   });

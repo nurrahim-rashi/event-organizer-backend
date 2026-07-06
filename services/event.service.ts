@@ -106,6 +106,18 @@ export const getEventService = async (id: number) => {
       id,
       deletedAt: null,
     },
+    include: {
+      organizer: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          profilePic: true,
+          role: true,
+        },
+      },
+      ticketTypes: true,
+    },
   });
 
   if (!event) {
@@ -114,7 +126,6 @@ export const getEventService = async (id: number) => {
 
   return event;
 };
-
 export const createEventService = async (body: CreateEventBody) => {
   const event = await prisma.event.create({
     data: {
