@@ -28,42 +28,15 @@ export const getUsersService = async () => {
 };
 
 export const getUserService = async (id: number) => {
-  const currentDate = new Date();
   const user = await prisma.user.findUnique({
     where: { id },
-    include: {
-      coupons: {
-        where: {
-          expiredAt: {
-            gt: currentDate,
-          },
-        },
-      },
-      referralSent: {
-        where: {
-          expiredAt: {
-            gt: currentDate,
-          },
-          isPointUsed: false,
-        },
-        select: {
-          pointsEarned: true,
-        },
-      },
-    },
   });
 
   if (!user) {
     throw new ApiError("User not found!", 404);
   }
 
-  const totalPoints = user.referralSent.reduce((sum, item) => sum + item.pointsEarned, 0);
-  const {referralSent, ...userProfileData} = user
-
-  return {
-    ...userProfileData,
-    totalPoints,
-  };
+  return user;
 };
 
 export const createUserService = async (body: CreateUserBody) => {

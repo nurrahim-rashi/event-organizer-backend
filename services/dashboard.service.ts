@@ -41,29 +41,11 @@ export const getDashboardStatsService = async (userId: number, role: string) => 
         return sum + (ticket.booked * ticket.price);
     }, 0);
 
-    const managedEvents = await prisma.event.findMany({
-      where: {
-        organizerId: userId,
-      },
-      select: {
-        id: true,
-        name: true,
-        startDate: true,
-      },
-      orderBy: {
-        startDate: 'asc'
-      },
-    });
-
     return {
       activeEventsCount,
       ticketsSold: ticketsSoldAggregation._sum.booked || 0,
       totalEarnings: totalEarnings,
-      managedEvents: managedEvents,
     };
-
-
-
   } else {
     // 🌟 JIKA CUSTOMER BIASA: Hitung tiket yang dia miliki
     const totalTicketsOwned = await prisma.transaction.count({
@@ -72,48 +54,8 @@ export const getDashboardStatsService = async (userId: number, role: string) => 
       },
     });
 
-    const upcomingTickets = await prisma.transaction.findMany({
-      where: {
-        userId: userId,
-        status: {
-          in: ["PAID", "DONE"]
-        },
-      },
-      include: {
-        event: {
-          select: {
-            id: true,
-            name: true,
-            startDate: true,
-            location: true,
-          }
-        }
-      },
-      orderBy: {
-        createdAt: 'desc'
-      }
-    });
-
-    const wishlistEvents = await prisma.event.findMany({
-      take: 2,
-      orderBy: {
-        createdAt: 'desc'
-      },
-      select: {
-        id: true,
-        name: true,
-        startDate: true,
-        location: true,
-      }
-    });
-
-    const totalAvailableEvents = await prisma.event.count();
-
     return {
       totalTicketsOwned,
-      upcomingTickets,
-      wishlistEvents,
-      totalAvailableEvents,
     };
   }
 };

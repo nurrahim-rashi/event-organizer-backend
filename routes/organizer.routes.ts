@@ -1,8 +1,6 @@
 import { Router } from "express";
 import { getProfile } from "../controllers/organizer.controller.js";
 
-const router = Router();
+export const organizerRoutes = Router();
 
-router.get("/:id", getProfile);
-
-export default router;
+organizerRoutes.get("/:id", getProfile);
