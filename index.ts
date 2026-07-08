@@ -3,12 +3,9 @@ import { userRoutes } from "./routes/user.routes.js";
 import { eventRoutes } from "./routes/event.routes.js";
 import { globalError, notFoundError } from "./utils/errors.js";
 import { authRoutes } from "./routes/auth.routes.js";
-import ticketRoutes from "./routes/ticket.routes.js";
-<<<<<<< Updated upstream
+import { ticketRoutes } from "./routes/ticket.routes.js";
 import { dashboardRoutes } from "./routes/dashboard.router.js";
-=======
-import organizerRoutes from "./routes/organizer.routes.js";
->>>>>>> Stashed changes
+import { organizerRoutes } from "./routes/organizer.routes.js";
 
 import cors from "cors";
 
@@ -24,11 +21,8 @@ app.use("/users", userRoutes);
 app.use("/auth", authRoutes);
 app.use("/events", eventRoutes);
 app.use("/tickets", ticketRoutes);
-<<<<<<< Updated upstream
 app.use("/dashboard", dashboardRoutes);
-=======
 app.use("/organizers", organizerRoutes);
->>>>>>> Stashed changes
 
 app.use(globalError);
 app.use(notFoundError);

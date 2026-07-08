@@ -6,11 +6,9 @@ import {
   deleteTicketController,
 } from "../controllers/ticket.controller.js";
 
-const router = Router();
+export const ticketRoutes = Router();
 
-router.post("/", createTicketController);
-router.get("/event/:eventId", getTicketsByEventController);
-router.put("/:id", updateTicketController);
-router.delete("/:id", deleteTicketController);
-
-export default router;
+ticketRoutes.post("/", createTicketController);
+ticketRoutes.get("/event/:eventId", getTicketsByEventController);
+ticketRoutes.put("/:id", updateTicketController);
+ticketRoutes.delete("/:id", deleteTicketController);
