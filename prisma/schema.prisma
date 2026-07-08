@@ -190,6 +190,10 @@ model ReferralUsage {
   referrerId  Int
   referredId  Int
 
+  pointsEarned Int @default(10000)
+  expiredAt DateTime
+  isPointUsed Boolean @default(false)
+
   createdAt   DateTime @default(now())
 
   referrer    User @relation("Referrer", fields: [referrerId], references: [id])
