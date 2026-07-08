@@ -10,6 +10,14 @@ type CreateEventBody = {
   startDate: string;
   endDate: string;
   organizerId: number;
+  ticketTypes?: Array<{ name: string; price: number; totalTicket: number }>;
+  vouchers?: Array<{
+    code: string;
+    discount: number;
+    quota: number;
+    startDate: string;
+    endDate: string;
+  }>;
 };
 
 type UpdateEventBody = {
@@ -38,12 +46,10 @@ type GetEventsQueryParams = {
 export const getEventsService = async (query: GetEventsQueryParams) => {
   const { search, category, location, sort, page, limit } = query;
 
-  // 1. Konfigurasi Default Pagination
   const pageNum = parseInt(page || "1", 10);
   const limitNum = parseInt(limit || "10", 10);
   const skip = (pageNum - 1) * limitNum;
 
-  // 2. "Where" clause
   const whereClause: any = {
     deletedAt: null,
   };
@@ -66,7 +72,6 @@ export const getEventsService = async (query: GetEventsQueryParams) => {
     };
   }
 
-  // 3. Bangun Sorting Clause
   const orderByClause: any = {};
   if (sort === "asc" || sort === "desc") {
     orderByClause.startDate = sort;
@@ -74,7 +79,6 @@ export const getEventsService = async (query: GetEventsQueryParams) => {
     orderByClause.createdAt = "desc";
   }
 
-  // 4. Eksekusi Query paralel
   const [events, totalItems] = await prisma.$transaction([
     prisma.event.findMany({
       where: whereClause,
@@ -126,17 +130,69 @@ export const getEventService = async (id: number) => {
 
   return event;
 };
+
 export const createEventService = async (body: CreateEventBody) => {
+  const parsedOrganizerId = parseInt(body.organizerId as any, 10);
+
+  // 1. Intercept values outside standard PostgreSQL 32-bit Integer boundaries (-2147483648 to 2147483647)
+  if (
+    isNaN(parsedOrganizerId) ||
+    parsedOrganizerId > 2147483647 ||
+    parsedOrganizerId < -2147483648
+  ) {
+    throw new ApiError(
+      "Invalid Organizer ID: Value is out of bounds for a standard 32-bit integer database column.",
+      400,
+    );
+  }
+
+  // 2. Strictly verify that the authenticated user exists in the database
+  const userExists = await prisma.user.findUnique({
+    where: { id: parsedOrganizerId },
+  });
+
+  if (!userExists) {
+    throw new ApiError(
+      `Unauthorized: The logged-in user session (ID: ${parsedOrganizerId}) does not match any valid user record in the database.`,
+      401,
+    );
+  }
+
+  // 3. Save Event along with structural nested TicketTypes and Vouchers arrays
   const event = await prisma.event.create({
     data: {
       name: body.name,
       description: body.description,
       location: body.location,
       category: body.category as any,
-      bannerImage: body.bannerImage,
+      bannerImage: body.bannerImage || "https://placehold.co/600x400",
       startDate: new Date(body.startDate),
       endDate: new Date(body.endDate),
-      organizerId: body.organizerId,
+      organizerId: parsedOrganizerId,
+
+      ticketTypes: {
+        create:
+          body.ticketTypes?.map((t) => ({
+            name: t.name as any,
+            price: Number(t.price),
+            totalTicket: Number(t.totalTicket),
+          })) || [],
+      },
+
+      vouchers: {
+        create:
+          body.vouchers?.map((v) => ({
+            code: v.code.toUpperCase(),
+            discount: Number(v.discount),
+            quota: Number(v.quota),
+            startDate: new Date(v.startDate),
+            endDate: new Date(v.endDate),
+          })) || [],
+      },
+    },
+    include: {
+      ticketTypes: true,
+      vouchers: true,
     },
   });
 
