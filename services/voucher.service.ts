@@ -1,13 +1,24 @@
 import { prisma } from "../lib/prisma.js";
 
-export const createVoucherService = async (data: {
+interface CreateVoucherInput {
   code: string;
   discount: number;
   startDate: string;
   endDate: string;
   quota: number;
   eventId: number;
-}) => {
+}
+
+interface UpdateVoucherInput {
+  code?: string;
+  discount?: number;
+  startDate?: string;
+  endDate?: string;
+  quota?: number;
+  eventId?: number;
+}
+
+export const createVoucherService = async (data: CreateVoucherInput) => {
   return await prisma.voucher.create({
     data: {
       code: data.code.toUpperCase(),
@@ -34,14 +45,20 @@ export const getVoucherByIdService = async (id: number) => {
   });
 };
 
-export const updateVoucherService = async (id: number, data: any) => {
-  if (data.startDate) data.startDate = new Date(data.startDate);
-  if (data.endDate) data.endDate = new Date(data.endDate);
-  if (data.code) data.code = data.code.toUpperCase();
+export const updateVoucherService = async (
+  id: number,
+  data: UpdateVoucherInput,
+) => {
+  const updateData: any = { ...data };
+
+  if (updateData.startDate)
+    updateData.startDate = new Date(updateData.startDate);
+  if (updateData.endDate) updateData.endDate = new Date(updateData.endDate);
+  if (updateData.code) updateData.code = updateData.code.toUpperCase();
 
   return await prisma.voucher.update({
     where: { id },
-    data,
+    data: updateData,
   });
 };
 
