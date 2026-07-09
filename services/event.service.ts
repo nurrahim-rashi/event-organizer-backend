@@ -55,10 +55,7 @@ export const getEventsService = async (query: GetEventsQueryParams) => {
   };
 
   if (search) {
-    whereClause.name = {
-      contains: search,
-      mode: "insensitive",
-    };
+    whereClause.name = { contains: search, mode: "insensitive" };
   }
 
   if (category) {
@@ -66,10 +63,7 @@ export const getEventsService = async (query: GetEventsQueryParams) => {
   }
 
   if (location) {
-    whereClause.location = {
-      contains: location,
-      mode: "insensitive",
-    };
+    whereClause.location = { contains: location, mode: "insensitive" };
   }
 
   const orderByClause: any = {};
@@ -85,6 +79,9 @@ export const getEventsService = async (query: GetEventsQueryParams) => {
       orderBy: orderByClause,
       skip: skip,
       take: limitNum,
+      include: {
+        ticketTypes: true,
+      },
     }),
     prisma.event.count({
       where: whereClause,
@@ -106,10 +103,7 @@ export const getEventsService = async (query: GetEventsQueryParams) => {
 
 export const getEventService = async (id: number) => {
   const event = await prisma.event.findFirst({
-    where: {
-      id,
-      deletedAt: null,
-    },
+    where: { id, deletedAt: null },
     include: {
       organizer: {
         select: {
@@ -121,6 +115,7 @@ export const getEventService = async (id: number) => {
         },
       },
       ticketTypes: true,
+      vouchers: true,
     },
   });
 
@@ -134,31 +129,18 @@ export const getEventService = async (id: number) => {
 export const createEventService = async (body: CreateEventBody) => {
   const parsedOrganizerId = parseInt(body.organizerId as any, 10);
 
-  // 1. Intercept values outside standard PostgreSQL 32-bit Integer boundaries (-2147483648 to 2147483647)
-  if (
-    isNaN(parsedOrganizerId) ||
-    parsedOrganizerId > 2147483647 ||
-    parsedOrganizerId < -2147483648
-  ) {
-    throw new ApiError(
-      "Invalid Organizer ID: Value is out of bounds for a standard 32-bit integer database column.",
-      400,
-    );
+  if (isNaN(parsedOrganizerId)) {
+    throw new ApiError("Invalid Organizer ID", 400);
   }
 
-  // 2. Strictly verify that the authenticated user exists in the database
   const userExists = await prisma.user.findUnique({
     where: { id: parsedOrganizerId },
   });
 
   if (!userExists) {
-    throw new ApiError(
-      `Unauthorized: The logged-in user session (ID: ${parsedOrganizerId}) does not match any valid user record in the database.`,
-      401,
-    );
+    throw new ApiError("Unauthorized: User not found.", 401);
   }
 
-  // 3. Save Event along with structural nested TicketTypes and Vouchers arrays
   const event = await prisma.event.create({
     data: {
       name: body.name,
@@ -173,7 +155,7 @@ export const createEventService = async (body: CreateEventBody) => {
       ticketTypes: {
         create:
           body.ticketTypes?.map((t) => ({
-            name: t.name as any,
+            name: t.name,
             price: Number(t.price),
             totalTicket: Number(t.totalTicket),
           })) || [],
@@ -196,10 +178,7 @@ export const createEventService = async (body: CreateEventBody) => {
     },
   });
 
-  return {
-    message: "Event created successfully.",
-    data: event,
-  };
+  return { message: "Event created successfully.", data: event };
 };
 
 export const updateEventService = async (id: number, body: UpdateEventBody) => {
@@ -207,9 +186,7 @@ export const updateEventService = async (id: number, body: UpdateEventBody) => {
     where: { id, deletedAt: null },
   });
 
-  if (!event) {
-    throw new ApiError("Event not found!", 404);
-  }
+  if (!event) throw new ApiError("Event not found!", 404);
 
   const updatedEvent = await prisma.event.update({
     where: { id },
@@ -224,10 +201,7 @@ export const updateEventService = async (id: number, body: UpdateEventBody) => {
     },
   });
 
-  return {
-    message: "Event updated successfully.",
-    data: updatedEvent,
-  };
+  return { message: "Event updated successfully.", data: updatedEvent };
 };
 
 export const deleteEventService = async (
@@ -237,18 +211,12 @@ export const deleteEventService = async (
     where: { id, deletedAt: null },
   });
 
-  if (!event) {
-    throw new ApiError("Event not found!", 404);
-  }
+  if (!event) throw new ApiError("Event not found!", 404);
 
   await prisma.event.update({
     where: { id },
-    data: {
-      deletedAt: new Date(),
-    },
+    data: { deletedAt: new Date() },
   });
 
-  return {
-    message: "Event deleted successfully.",
-  };
+  return { message: "Event deleted successfully." };
 };
