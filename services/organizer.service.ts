@@ -24,33 +24,36 @@ export const getOrganizerProfileData = async (organizerId: number) => {
 
   const eventIds = organizerData.organizedEvents.map((e) => e.id);
 
-  const reviews = await prisma.review.findMany({
-    where: {
-      transaction: {
-        eventId: { in: eventIds },
-      },
-    },
-    include: {
-      user: {
-        select: {
-          name: true,
-          profilePic: true,
+  let reviews: any[] = [];
+  if (eventIds.length > 0) {
+    reviews = await prisma.review.findMany({
+      where: {
+        transaction: {
+          eventId: { in: eventIds },
         },
       },
-      transaction: {
-        include: {
-          event: {
-            select: {
-              name: true,
+      include: {
+        user: {
+          select: {
+            name: true,
+            profilePic: true,
+          },
+        },
+        transaction: {
+          include: {
+            event: {
+              select: {
+                name: true,
+              },
             },
           },
         },
       },
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-  });
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+  }
 
   const totalReviews = reviews.length;
   const averageRating =
@@ -65,6 +68,7 @@ export const getOrganizerProfileData = async (organizerId: number) => {
     2: 0,
     1: 0,
   };
+
   reviews.forEach((r) => {
     if (distributionMap[r.rating] !== undefined) {
       distributionMap[r.rating]++;
@@ -87,9 +91,8 @@ export const getOrganizerProfileData = async (organizerId: number) => {
       role: organizerData.role,
       referralCode: organizerData.referralCode,
     },
-    bio: `Passionate event organizer specialized in creating memorable experiences. Managed over ${eventIds.length} successful events.`, // Custom bio dummy karena di skema User tidak ada field bio
     eventsCount: eventIds.length,
-    averageRating,
+    averageRating: parseFloat(averageRating.toFixed(1)),
     totalReviews,
     ratingDistribution,
     reviews,

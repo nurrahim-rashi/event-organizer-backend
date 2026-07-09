@@ -1,9 +1,10 @@
-import { Request, Response, NextFunction } from "express";
+import { Request, Response } from "express";
 import { getOrganizerProfileData } from "../services/organizer.service.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
 export const getProfile = asyncHandler(async (req: Request, res: Response) => {
-  const id = (req.query.id as string) || "";
+  const { id } = req.params;
+
   const organizerId = parseInt(id, 10);
 
   if (isNaN(organizerId)) {
@@ -13,6 +14,5 @@ export const getProfile = asyncHandler(async (req: Request, res: Response) => {
   }
 
   const profileData = await getOrganizerProfileData(organizerId);
-
   res.status(200).json(profileData);
 });
