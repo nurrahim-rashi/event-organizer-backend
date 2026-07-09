@@ -1,11 +1,30 @@
 import { prisma } from "../lib/prisma.js";
 
 export const getUserPointsService = async (userId: number) => {
+  const currentDate = new Date();
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { id: true, name: true, email: true },
+    include : {
+      referralSent : {
+        where: {
+          expiredAt: {gt: currentDate},
+          isPointUsed: false,
+        },
+
+        select: {
+          pointsEarned: true,
+        },
+      },
+    }
   });
-  return user;
+  if (!user) return null;
+
+  const totalPoints = user.referralSent.reduce((sum, item) => sum + item.pointsEarned, 0);
+
+  return {
+    id: user.id,
+    totalPoints,
+  };
 };
 
 export const addPointsService = async (userId: number, pointsToAdd: number) => {

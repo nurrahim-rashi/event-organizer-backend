@@ -1,6 +1,7 @@
 import { Role } from "../generated/prisma/enums.js";
 import { prisma } from "../lib/prisma.js";
 import { ApiError } from "../utils/api-error.js";
+import { getUserPointsService } from "./point.service.js";
 
 type CreateUserBody = {
   name: string;
@@ -39,17 +40,6 @@ export const getUserService = async (id: number) => {
           },
         },
       },
-      referralSent: {
-        where: {
-          expiredAt: {
-            gt: currentDate,
-          },
-          isPointUsed: false,
-        },
-        select: {
-          pointsEarned: true,
-        },
-      },
     },
   });
 
@@ -57,12 +47,12 @@ export const getUserService = async (id: number) => {
     throw new ApiError("User not found!", 404);
   }
 
-  const totalPoints = user.referralSent.reduce((sum, item) => sum + item.pointsEarned, 0);
-  const { referralSent, ...userProfileData } = user;
+  const pointsData = await getUserPointsService(id);
+  const totalPoints = pointsData ? pointsData.totalPoints : 0;
 
 
   return {
-    ...userProfileData,
+    ...user,
     totalPoints,
   };
 };
