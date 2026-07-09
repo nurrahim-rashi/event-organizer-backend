@@ -13,6 +13,10 @@ export const getOrganizerProfileData = async (organizerId: number) => {
       organizedEvents: {
         select: {
           id: true,
+          name: true,
+          startDate: true,
+          location: true,
+          bannerImage: true,
         },
       },
     },
@@ -22,7 +26,9 @@ export const getOrganizerProfileData = async (organizerId: number) => {
     throw new Error("Organizer not found");
   }
 
-  const eventIds = organizerData.organizedEvents.map((e) => e.id);
+  // Sekarang organizedEvents berisi detail lengkap, bukan cuma ID
+  const events = organizerData.organizedEvents;
+  const eventIds = events.map((e) => e.id);
 
   let reviews: any[] = [];
   if (eventIds.length > 0) {
@@ -68,11 +74,8 @@ export const getOrganizerProfileData = async (organizerId: number) => {
     2: 0,
     1: 0,
   };
-
   reviews.forEach((r) => {
-    if (distributionMap[r.rating] !== undefined) {
-      distributionMap[r.rating]++;
-    }
+    if (distributionMap[r.rating] !== undefined) distributionMap[r.rating]++;
   });
 
   const ratingDistribution = [5, 4, 3, 2, 1].map((stars) => {
@@ -91,7 +94,8 @@ export const getOrganizerProfileData = async (organizerId: number) => {
       role: organizerData.role,
       referralCode: organizerData.referralCode,
     },
-    eventsCount: eventIds.length,
+    organizedEvents: events,
+    eventsCount: events.length,
     averageRating: parseFloat(averageRating.toFixed(1)),
     totalReviews,
     ratingDistribution,
