@@ -28,7 +28,9 @@ export const getEventController = async (
   try {
     const id = Number(req.params.id);
 
-    const event = await getEventService(id);
+    const filter = (req.query.filter as 'day' | 'month' | 'year') || 'month';
+
+    const event = await getEventService(id, filter);
 
     res.status(200).json({
       success: true,
