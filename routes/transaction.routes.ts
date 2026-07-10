@@ -3,7 +3,7 @@ import {
   createTransactionController,
   getTransactionsByEventController,
 } from "../controllers/transaction.controller.js";
-import { verifyToken } from "../middleware/auth.middleware.js";
+import { verifyToken } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 

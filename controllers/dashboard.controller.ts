@@ -1,18 +1,18 @@
 import { Request, Response, NextFunction } from "express";
 import { getDashboardStatsService } from "../services/dashboard.service.js";
-import { AuthenticatedRequest } from "../middleware/auth.middleware.js";
+import { AuthenticatedRequest } from "../middlewares/auth.middleware.js";
 
 export const getDashboardStatsController = async (
   req: AuthenticatedRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     if (!req.user) {
-        return res.status(400).json({sucess: false, message: "Unauthorized"})
+      return res.status(400).json({ sucess: false, message: "Unauthorized" });
     }
 
-    const userId = Number(req.user.id); 
+    const userId = Number(req.user.id);
     const role = req.user.role;
 
     const stats = await getDashboardStatsService(userId, role);
@@ -22,7 +22,6 @@ export const getDashboardStatsController = async (
       data: stats,
     });
   } catch (err) {
-    
-    next(err); 
+    next(err);
   }
 };
