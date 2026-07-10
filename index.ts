@@ -6,6 +6,7 @@ import { authRoutes } from "./routes/auth.routes.js";
 import { ticketRoutes } from "./routes/ticket.routes.js";
 import { dashboardRoutes } from "./routes/dashboard.router.js";
 import { organizerRoutes } from "./routes/organizer.routes.js";
+import transactionRoutes from "./routes/transaction.routes.js";
 
 import cors from "cors";
 
@@ -23,6 +24,7 @@ app.use("/events", eventRoutes);
 app.use("/tickets", ticketRoutes);
 app.use("/dashboard", dashboardRoutes);
 app.use("/organizers", organizerRoutes);
+app.use("/transactions", transactionRoutes);
 
 app.use(globalError);
 app.use(notFoundError);

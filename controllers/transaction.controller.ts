@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from "express";
-import { AuthenticatedRequest } from "../middleware/auth.middleware.js";
+import { AuthenticatedRequest } from "../middlewares/auth.middleware.js";
 import {
   createTransactionService,
-  getTransactionsByEventService,
+  getTransactionByIdService,
 } from "../services/transaction.service.js";
 
 export const getTransactionsByEventController = async (
@@ -18,7 +18,7 @@ export const getTransactionsByEventController = async (
     }
 
     const eventId = Number(req.params.eventId);
-    const result = await getTransactionsByEventService(userId, eventId);
+    const result = await getTransactionByIdService(userId, eventId);
 
     res.status(200).json({
       success: true,
