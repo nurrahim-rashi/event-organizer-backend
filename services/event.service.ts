@@ -97,7 +97,7 @@ export const getEventsService = async (query: GetEventsQueryParams) => {
   };
 };
 
-export const getEventService = async (id: number) => {
+export const getEventService = async (id: number, filterType: 'day' | 'month' | 'year' = 'month') => {
   const event = await prisma.event.findFirst({
     where: { id, deletedAt: null },
     include: {
@@ -112,10 +112,58 @@ export const getEventService = async (id: number) => {
       },
       ticketTypes: true,
       vouchers: true,
+
+      transactions: {
+        where: {
+          status: "DONE"
+        },
+        select: {
+          totalPrice: true,
+          createdAt: true,
+          items: {
+            select: {
+              qty: true,
+            },
+          },
+        },
+        orderBy: {createdAt: 'asc'},
+      }
     },
   });
   if (!event) throw new ApiError("Event not found!", 404);
-  return event;
+
+  const statsMap: {[key: string]: {revenue: number; ticketSold: number}} = {};
+  event.transactions.forEach((tx) => {
+    const date = new Date(tx.createdAt);
+    let label = "";
+
+    if (filterType === 'year') {
+      label = date.getFullYear().toString();
+    } else if (filterType === 'month') {
+      label = date.toLocaleString('id-ID', {month: 'short', year: 'numeric'});
+    } else {
+      label = date.toLocaleString('id-ID', {day: '2-digit', month: 'short'});
+    }
+
+    const totalTicketsInTx = tx.items.reduce((sum, item) => sum + (item.qty || 1), 0);
+    if (!statsMap[label]) {
+      statsMap[label] = {revenue: 0, ticketSold: 0};
+    }
+
+    statsMap[label].revenue += tx.totalPrice;
+    statsMap[label].ticketSold += totalTicketsInTx;
+  });
+
+  const chartData = Object.keys(statsMap).map((label) => ({
+    label,
+    revenue: statsMap[label].revenue,
+    ticketsSold: statsMap[label].ticketSold,
+  }));
+
+  return {
+    ...event,
+    statistics: chartData
+  };
 };
 
 export const createEventService = async (body: CreateEventBody) => {
