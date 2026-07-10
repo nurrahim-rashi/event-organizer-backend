@@ -24,8 +24,21 @@ model User {
   referralSent     ReferralUsage[] @relation("Referrer")
   reviews          Review[]
   transactions     Transaction[]
+  points           Int             @default(0)
 
   @@map("users")
+  pointHistories PointHistory[]
+}
+
+model PointHistory {
+  id            Int      @id @default(autoincrement())
+  userId        Int
+  amount        Int
+  description   String
+  createdAt     DateTime @default(now())
+  user          User     @relation(fields: [userId], references: [id])
+
+  @@map("point_histories")
 }
 
 model Event {
@@ -94,12 +107,13 @@ model Transaction {
   eventId      Int
   voucherId    Int?
   couponId     Int?
-  status       TransactionStatus
+  status       TransactionStatus @default(WAITING_PAYMENT)
   totalPrice   Int
   paymentProof String?
-  pointUsed    Int?
+  pointUsed    Int               @default(0)
   createdAt    DateTime          @default(now())
   expiredAt    DateTime
+  updatedAt    DateTime          @updatedAt
   review       Review?
   items        TransactionItem[]
   coupon       Coupon?           @relation(fields: [couponId], references: [id])
@@ -169,10 +183,11 @@ enum EventCategory {
 
 enum TransactionStatus {
   WAITING_PAYMENT
-  PAID
-  CANCELLED
+  WAITING_CONFIRMATION
+  DONE   
+  REJECTED
   EXPIRED
-  DONE
+  CANCELLED
 }
 
 enum TicketName {

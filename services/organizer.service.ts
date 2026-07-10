@@ -26,7 +26,6 @@ export const getOrganizerProfileData = async (organizerId: number) => {
     throw new Error("Organizer not found");
   }
 
-  // Sekarang organizedEvents berisi detail lengkap, bukan cuma ID
   const events = organizerData.organizedEvents;
   const eventIds = events.map((e) => e.id);
 

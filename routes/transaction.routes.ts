@@ -9,7 +9,7 @@ const router = Router();
 
 router.use(verifyToken);
 
-router.post("/", createTransactionController);
+router.post("/checkout", createTransactionController);
 router.get("/event/:eventId", getTransactionsByEventController);
 
 export default router;
