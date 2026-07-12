@@ -3,22 +3,11 @@ import { prisma } from "../lib/prisma.js";
 import { ApiError } from "../utils/api-error.js";
 import argon from "argon2";
 import jwt from "jsonwebtoken";
+import { RegisterSchema, LoginSchema } from "../validators/auth.validator.js";
 
 export const registerService = async (
-    body: Pick<User, "name" | "email" | "password" | "role">,
+    body: RegisterSchema
 ) => {
-
-    if (!body.name || body.name.trim() === "") {
-        throw new ApiError("Name is required and can not be empty", 400);
-    }
-
-    if (!body.email || body.email.trim() === "") {
-        throw new ApiError("Email is required and can not be empty", 400);
-    }
-
-    if (!body.password || body.password.trim() === "") {
-        throw new ApiError("Password is required and can not be empty", 400);
-    }
 
     const user = await prisma.user.findUnique({
         where: {email: body.email},
@@ -44,13 +33,9 @@ export const registerService = async (
     return {
         message: "Register success"
     };
-}
+};
 
-
-
-
-
-export const loginService = async (body: Pick<User, "email" | "password">) => {
+export const loginService = async (body: LoginSchema) => {
     const user = await prisma.user.findUnique({
         where: {email: body.email}
     });
