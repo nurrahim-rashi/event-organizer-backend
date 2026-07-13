@@ -2,8 +2,15 @@ import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { ApiError } from "../utils/api-error.js";
 
-export interface AuthenticatedRequest extends Request {
+export interface MaybeAuthenticatedRequest extends Request {
   user?: {
+    id: number;
+    role: string
+  }
+}
+
+export interface AuthenticatedRequest extends Request {
+  user: {
     id: number;
     role: string;
   };

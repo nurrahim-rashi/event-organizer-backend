@@ -7,7 +7,6 @@ import {
   deleteUserService,
 } from "../services/user.service.js";
 import { cloudinaryUpload } from "../utils/cloudinary.js";
-import { upload } from "../middlewares/multer.js";
 
 export const getUsersController = async (
   req: Request,
