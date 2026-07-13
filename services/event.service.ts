@@ -79,7 +79,14 @@ export const createEventService = async (body: any) => {
       startDate: new Date(body.startDate),
       endDate: new Date(body.endDate),
       organizerId: Number(body.organizerId),
+      ticketTypes: {
+        create: body.ticketTypes || [],
+      },
+      vouchers: {
+        create: body.vouchers || [],
+      },
     },
+    include: { ticketTypes: true, vouchers: true },
   });
   return { message: "Event created successfully.", data: event };
 };
@@ -90,17 +97,34 @@ export const updateEventService = async (id: number, body: any) => {
   });
   if (!event) throw new ApiError("Event not found!", 404);
 
-  const updatedEvent = await prisma.event.update({
-    where: { id },
-    data: {
-      name: body.name,
-      description: body.description,
-      location: body.location,
-      category: body.category,
-      bannerImage: body.bannerImage,
-    },
+  return await prisma.$transaction(async (tx) => {
+    const updatedEvent = await tx.event.update({
+      where: { id },
+      data: {
+        name: body.name,
+        description: body.description,
+        location: body.location,
+        category: body.category,
+        bannerImage: body.bannerImage,
+        startDate: body.startDate ? new Date(body.startDate) : undefined,
+        endDate: body.endDate ? new Date(body.endDate) : undefined,
+        ticketTypes: body.ticketTypes
+          ? {
+              deleteMany: {},
+              create: body.ticketTypes,
+            }
+          : undefined,
+        vouchers: body.vouchers
+          ? {
+              deleteMany: {},
+              create: body.vouchers,
+            }
+          : undefined,
+      },
+      include: { ticketTypes: true, vouchers: true },
+    });
+    return { message: "Event updated successfully.", data: updatedEvent };
   });
-  return { message: "Event updated successfully.", data: updatedEvent };
 };
 
 export const deleteEventService = async (id: number) => {
