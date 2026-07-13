@@ -1,8 +1,7 @@
 import { Request, Response } from "express";
 import { getOrganizerProfileData } from "../services/organizer.service.js";
-import { asyncHandler } from "../utils/asyncHandler.js";
 
-export const getProfile = asyncHandler(async (req: Request, res: Response) => {
+export const getProfile = async (req: Request, res: Response) => {
   const { id } = req.params;
 
   const organizerId = parseInt(id, 10);
@@ -15,4 +14,4 @@ export const getProfile = asyncHandler(async (req: Request, res: Response) => {
 
   const profileData = await getOrganizerProfileData(organizerId);
   res.status(200).json(profileData);
-});
+};

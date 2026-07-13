@@ -1,27 +1,17 @@
 import { prisma } from "../lib/prisma.js";
+import { z } from "zod";
+import {
+  createVoucherSchema,
+  updateVoucherSchema,
+} from "../validators/voucher.validator.js";
 
-interface CreateVoucherInput {
-  code: string;
-  discount: number;
-  startDate: string;
-  endDate: string;
-  quota: number;
-  eventId: number;
-}
-
-interface UpdateVoucherInput {
-  code?: string;
-  discount?: number;
-  startDate?: string;
-  endDate?: string;
-  quota?: number;
-  eventId?: number;
-}
+type CreateVoucherInput = z.infer<typeof createVoucherSchema>;
+type UpdateVoucherInput = z.infer<typeof updateVoucherSchema>;
 
 export const createVoucherService = async (data: CreateVoucherInput) => {
   return await prisma.voucher.create({
     data: {
-      code: data.code.toUpperCase(),
+      code: data.code,
       discount: data.discount,
       startDate: new Date(data.startDate),
       endDate: new Date(data.endDate),
@@ -54,7 +44,6 @@ export const updateVoucherService = async (
   if (updateData.startDate)
     updateData.startDate = new Date(updateData.startDate);
   if (updateData.endDate) updateData.endDate = new Date(updateData.endDate);
-  if (updateData.code) updateData.code = updateData.code.toUpperCase();
 
   return await prisma.voucher.update({
     where: { id },
