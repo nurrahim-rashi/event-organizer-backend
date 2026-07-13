@@ -2,6 +2,7 @@ import { Role } from "../generated/prisma/enums.js";
 import { prisma } from "../lib/prisma.js";
 import { ApiError } from "../utils/api-error.js";
 import { getUserPointsService } from "./point.service.js";
+import { cloudinaryUpload } from "../utils/cloudinary.js";
 
 type CreateUserBody = {
   name: string;
@@ -74,7 +75,11 @@ export const createUserService = async (body: CreateUserBody) => {
   };
 };
 
-export const updateUserService = async (id: number, body: UpdateUserBody) => {
+export const updateUserService = async (
+  id: number,
+  body: UpdateUserBody,
+  file?: Express.Multer.File,
+) => {
   const user = await prisma.user.findUnique({
     where: { id },
   });
@@ -83,13 +88,20 @@ export const updateUserService = async (id: number, body: UpdateUserBody) => {
     throw new ApiError("User not found!", 404);
   }
 
+  let profilePic = body.profilePic;
+
+  if (file) {
+    const uploadResult = await cloudinaryUpload(file);
+    profilePic = uploadResult.secure_url;
+  }
+
   const updatedUser = await prisma.user.update({
     where: { id },
     data: {
       name: body.name,
       email: body.email,
       password: body.password,
-      profilePic: body.profilePic,
+      profilePic,
     },
   });
 
