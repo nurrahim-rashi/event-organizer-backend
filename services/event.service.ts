@@ -1,86 +1,24 @@
 import { prisma } from "../lib/prisma.js";
 import { ApiError } from "../utils/api-error.js";
+import { PaginationQueryParams } from "../validators/event.validator.js";
 
-type CreateEventBody = {
-  name: string;
-  description: string;
-  location: string;
-  category: string;
-  bannerImage: string;
-  startDate: string;
-  endDate: string;
-  organizerId: number;
-  ticketTypes?: Array<{ name: string; price: number; totalTicket: number }>;
-  vouchers?: Array<{
-    code: string;
-    discount: number;
-    quota: number;
-    startDate: string;
-    endDate: string;
-  }>;
-};
+export const getEventsService = async (query: PaginationQueryParams) => {
+  const { page, take, sortOrder, sortBy, search } = query;
+  const skip = (page - 1) * take;
 
-// Update interface agar menerima ticketTypes dan vouchers
-type UpdateEventBody = {
-  name?: string;
-  description?: string;
-  location?: string;
-  category?: string;
-  bannerImage?: string;
-  startDate?: string;
-  endDate?: string;
-  ticketTypes?: Array<{
-    id?: number;
-    name: string;
-    price: number;
-    totalTicket: number;
-  }>;
-  vouchers?: Array<{
-    id?: number;
-    code: string;
-    discount: number;
-    quota: number;
-    startDate: string;
-    endDate: string;
-  }>;
-};
+  const whereClause: any = {
+    deletedAt: null,
+    ...(search && { name: { contains: search, mode: "insensitive" } }),
+  };
 
-type DeleteEventResponse = {
-  message: string;
-};
-
-type GetEventsQueryParams = {
-  search?: string;
-  category?: string;
-  location?: string;
-  sort?: string;
-  page?: string;
-  limit?: string;
-};
-
-export const getEventsService = async (query: GetEventsQueryParams) => {
-  const { search, category, location, sort, page, limit } = query;
-  const pageNum = parseInt(page || "1", 10);
-  const limitNum = parseInt(limit || "10", 10);
-  const skip = (pageNum - 1) * limitNum;
-
-  const whereClause: any = { deletedAt: null };
-  if (search) whereClause.name = { contains: search, mode: "insensitive" };
-  if (category) whereClause.category = category;
-  if (location)
-    whereClause.location = { contains: location, mode: "insensitive" };
-
-  const orderByClause: any =
-    sort === "asc" || sort === "desc"
-      ? { startDate: sort }
-      : { createdAt: "desc" };
+  const orderByClause = { [sortBy]: sortOrder };
 
   const [events, totalItems] = await prisma.$transaction([
     prisma.event.findMany({
       where: whereClause,
       orderBy: orderByClause,
       skip,
-      take: limitNum,
+      take,
       include: { ticketTypes: true },
     }),
     prisma.event.count({ where: whereClause }),
@@ -89,15 +27,18 @@ export const getEventsService = async (query: GetEventsQueryParams) => {
   return {
     data: events,
     meta: {
-      currentPage: pageNum,
-      limit: limitNum,
+      currentPage: page,
+      limit: take,
       totalItems,
-      totalPages: Math.ceil(totalItems / limitNum),
+      totalPages: Math.ceil(totalItems / take),
     },
   };
 };
 
-export const getEventService = async (id: number, filterType: 'day' | 'month' | 'year' = 'month') => {
+export const getEventService = async (
+  id: number,
+  filterType: "day" | "month" | "year" = "month",
+) => {
   const event = await prisma.event.findFirst({
     where: { id, deletedAt: null },
     include: {
@@ -112,145 +53,62 @@ export const getEventService = async (id: number, filterType: 'day' | 'month' | 
       },
       ticketTypes: true,
       vouchers: true,
-
       transactions: {
-        where: {
-          status: "DONE"
-        },
+        where: { status: "DONE" },
         select: {
           totalPrice: true,
           createdAt: true,
-          items: {
-            select: {
-              qty: true,
-            },
-          },
+          items: { select: { qty: true } },
         },
-        orderBy: {createdAt: 'asc'},
-      }
+        orderBy: { createdAt: "asc" },
+      },
     },
   });
   if (!event) throw new ApiError("Event not found!", 404);
-
-  const statsMap: {[key: string]: {revenue: number; ticketSold: number}} = {};
-  event.transactions.forEach((tx) => {
-    const date = new Date(tx.createdAt);
-    let label = "";
-
-    if (filterType === 'year') {
-      label = date.getFullYear().toString();
-    } else if (filterType === 'month') {
-      label = date.toLocaleString('id-ID', {month: 'short', year: 'numeric'});
-    } else {
-      label = date.toLocaleString('id-ID', {day: '2-digit', month: 'short'});
-    }
-
-    const totalTicketsInTx = tx.items.reduce((sum, item) => sum + (item.qty || 1), 0);
-    if (!statsMap[label]) {
-      statsMap[label] = {revenue: 0, ticketSold: 0};
-    }
-
-    statsMap[label].revenue += tx.totalPrice;
-    statsMap[label].ticketSold += totalTicketsInTx;
-  });
-
-  const chartData = Object.keys(statsMap).map((label) => ({
-    label,
-    revenue: statsMap[label].revenue,
-    ticketsSold: statsMap[label].ticketSold,
-  }));
-
-  return {
-    ...event,
-    statistics: chartData
-  };
+  return event;
 };
 
-export const createEventService = async (body: CreateEventBody) => {
-  const parsedOrganizerId = parseInt(body.organizerId as any, 10);
-  const userExists = await prisma.user.findUnique({
-    where: { id: parsedOrganizerId },
-  });
-  if (!userExists) throw new ApiError("Unauthorized: User not found.", 401);
-
+export const createEventService = async (body: any) => {
   const event = await prisma.event.create({
     data: {
       name: body.name,
       description: body.description,
       location: body.location,
-      category: body.category as any,
+      category: body.category,
       bannerImage: body.bannerImage || "https://placehold.co/600x400",
       startDate: new Date(body.startDate),
       endDate: new Date(body.endDate),
-      organizerId: parsedOrganizerId,
-      ticketTypes: {
-        create:
-          body.ticketTypes?.map((t) => ({
-            name: t.name,
-            price: Number(t.price),
-            totalTicket: Number(t.totalTicket),
-          })) || [],
-      },
-      vouchers: {
-        create:
-          body.vouchers?.map((v) => ({
-            code: v.code.toUpperCase(),
-            discount: Number(v.discount),
-            quota: Number(v.quota),
-            startDate: new Date(v.startDate),
-            endDate: new Date(v.endDate),
-          })) || [],
-      },
+      organizerId: Number(body.organizerId),
     },
   });
   return { message: "Event created successfully.", data: event };
 };
 
-export const updateEventService = async (id: number, body: UpdateEventBody) => {
+export const updateEventService = async (id: number, body: any) => {
   const event = await prisma.event.findFirst({
     where: { id, deletedAt: null },
   });
   if (!event) throw new ApiError("Event not found!", 404);
 
-  // Gunakan Transaction untuk update event + replace ticketTypes
-  return await prisma.$transaction(async (tx) => {
-    const updatedEvent = await tx.event.update({
-      where: { id },
-      data: {
-        name: body.name,
-        description: body.description,
-        location: body.location,
-        category: body.category as any,
-        bannerImage: body.bannerImage,
-        startDate: body.startDate ? new Date(body.startDate) : undefined,
-        endDate: body.endDate ? new Date(body.endDate) : undefined,
-      },
-    });
-
-    // Jika ticketTypes dikirim, kita hapus yang lama dan buat yang baru (re-sync)
-    if (body.ticketTypes) {
-      await tx.ticketType.deleteMany({ where: { eventId: id } });
-      await tx.ticketType.createMany({
-        data: body.ticketTypes.map((t) => ({
-          eventId: id,
-          name: t.name,
-          price: Number(t.price),
-          totalTicket: Number(t.totalTicket),
-        })),
-      });
-    }
-
-    return { message: "Event updated successfully.", data: updatedEvent };
+  const updatedEvent = await prisma.event.update({
+    where: { id },
+    data: {
+      name: body.name,
+      description: body.description,
+      location: body.location,
+      category: body.category,
+      bannerImage: body.bannerImage,
+    },
   });
+  return { message: "Event updated successfully.", data: updatedEvent };
 };
 
-export const deleteEventService = async (
-  id: number,
-): Promise<DeleteEventResponse> => {
+export const deleteEventService = async (id: number) => {
   const event = await prisma.event.findFirst({
     where: { id, deletedAt: null },
   });
   if (!event) throw new ApiError("Event not found!", 404);
+
   await prisma.event.update({ where: { id }, data: { deletedAt: new Date() } });
   return { message: "Event deleted successfully." };
 };

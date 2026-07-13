@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from "express";
+import { Request, Response } from "express";
 import {
   getEventsService,
   getEventService,
@@ -6,92 +6,51 @@ import {
   updateEventService,
   deleteEventService,
 } from "../services/event.service.js";
+import { paginationQuerySchema } from "../validators/event.validator.js";
 
-export const getEventsController = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  try {
-    const result = await getEventsService(req.query);
-    return res.status(200).json(result);
-  } catch (err) {
-    next(err);
-  }
+export const getEventsController = async (req: Request, res: Response) => {
+  const query = paginationQuerySchema.parse(req.query);
+  const result = await getEventsService(query);
+  res.status(200).json(result);
 };
 
-export const getEventController = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  try {
-    const id = Number(req.params.id);
+export const getEventController = async (req: Request, res: Response) => {
+  const id = Number(req.params.id);
+  const filter = (req.query.filter as "day" | "month" | "year") || "month";
 
-    const filter = (req.query.filter as 'day' | 'month' | 'year') || 'month';
+  const event = await getEventService(id, filter);
 
-    const event = await getEventService(id, filter);
-
-    res.status(200).json({
-      success: true,
-      data: event,
-    });
-  } catch (err) {
-    next(err);
-  }
+  res.status(200).json({
+    success: true,
+    data: event,
+  });
 };
 
-export const createEventController = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  try {
-    const result = await createEventService(req.body);
+export const createEventController = async (req: Request, res: Response) => {
+  const result = await createEventService(req.body);
 
-    res.status(201).json({
-      success: true,
-      ...result,
-    });
-  } catch (err) {
-    next(err);
-  }
+  res.status(201).json({
+    success: true,
+    ...result,
+  });
 };
 
-export const updateEventController = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  try {
-    const id = Number(req.params.id);
+export const updateEventController = async (req: Request, res: Response) => {
+  const id = Number(req.params.id);
+  const result = await updateEventService(id, req.body);
 
-    const result = await updateEventService(id, req.body);
-
-    res.status(200).json({
-      success: true,
-      ...result,
-    });
-  } catch (err) {
-    next(err);
-  }
+  res.status(200).json({
+    success: true,
+    ...result,
+  });
 };
 
-export const deleteEventController = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  try {
-    const id = Number(req.params.id);
+export const deleteEventController = async (req: Request, res: Response) => {
+  const id = Number(req.params.id);
+  const result = await deleteEventService(id);
 
-    const result = await deleteEventService(id);
-
-    res.status(200).json({
-      success: true,
-      ...result,
-    });
-  } catch (err) {
-    next(err);
-  }
+  res.status(200).json({
+    success: true,
+    ...result,
+  });
 };

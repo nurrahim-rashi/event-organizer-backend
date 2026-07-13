@@ -1,16 +1,23 @@
 import { z } from "zod";
 
-export const getEventsQuerySchema = z.object({
-  search: z.string().optional(),
-  category: z.string().optional(),
-  location: z.string().optional(),
-  sort: z
-    .enum(["newest", "oldest", "price_low", "price_high"])
-    .default("newest"),
+export interface PaginationQueryParams {
+  page: number;
+  take: number;
+  sortOrder: string;
+  sortBy: string;
+  search: string;
+}
+
+export const paginationQuerySchema = z.object({
   page: z.string().transform(Number).pipe(z.number().min(1)).default(1),
-  limit: z
+
+  take: z
     .string()
     .transform(Number)
     .pipe(z.number().min(1).max(100))
     .default(10),
+
+  sortOrder: z.enum(["asc", "desc"]).default("desc"),
+  sortBy: z.string().default("createdAt"),
+  search: z.string().default(""),
 });
