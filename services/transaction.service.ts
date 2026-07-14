@@ -1,5 +1,8 @@
 import { prisma } from "../lib/prisma.js";
-import { TransactionItem } from "../generated/prisma/client.js";
+import { TransactionItem, TransactionStatus } from "../generated/prisma/client.js";
+import { number } from "zod";
+import { ApiError } from "../utils/api-error.js";
+import { AuthenticatedRequest } from "../middlewares/auth.middleware.js";
 
 type TransactionItemInput = Pick<TransactionItem, "ticketTypeId" | "qty">;
 
@@ -108,4 +111,92 @@ export const getTransactionByIdService = async (
   }
 
   return { data: transaction };
+};
+
+export const updateTransactionStatusService = async (
+  req: AuthenticatedRequest,
+  transactionId: number,
+  newStatus: TransactionStatus,
+) => {
+  const organizerId = Number(req.user.id)
+
+  //1. Cari transaksi berdasarkan event
+  const transaction = await prisma.transaction.findUnique({
+    where: { id: transactionId},
+    include: {
+      event: {
+        select: {
+          organizerId: true,
+        }
+      }
+    }
+  });
+
+  //2. Kalau ga ada throw ApiError 404
+  if (!transaction) {
+    throw new ApiError("Transaction does not exist", 404)
+  }
+
+  //3. Cek apakah transaksi sesuai dengan organizerId
+  if (transaction.event.organizerId !== organizerId) {
+    throw new ApiError("Forbidden access, you do not own this event", 403)
+  }
+
+  //4. Cek status masih "WAITING_CONFIRMATION" atau ngga
+  if (transaction.status !== "WAITING_CONFIRMATION" && transaction.status !== "WAITING_PAYMENT") {
+    throw new ApiError(`Cannot update status. Current status is ${transaction.status}`, 400)
+  }
+
+  //5. Update status transaski ke newStatus
+  const updatedStatus = await prisma.transaction.update({
+    where: {id: transactionId},
+    data: {
+      status: newStatus
+    }
+  });
+
+  //6. return message (message + updated transaction)
+  return {
+    message: "Transaction updated successfully.",
+    data: updatedStatus
+  }
+};
+
+export const getIncomingTransactionsByEventService = async (
+  eventId: number,
+  organizerId: number
+) => {
+  if (isNaN(eventId)) throw new Error("Invalid event ID");
+  // 1. Pastikan dulu kalau event ini benar-benar milik admin/organizer yang sedang login
+  const event = await prisma.event.findFirst({
+    where: {
+      id: eventId,
+      organizerId: organizerId,
+    },
+  });
+
+  if (!event) {
+    throw new Error("Forbidden access or event not found");
+  }
+
+  // 2. Ambil daftar transaksi yang butuh konfirmasi
+  const transactions = await prisma.transaction.findMany({
+    where: {
+      eventId: eventId,
+      status: "WAITING_CONFIRMATION", // 🌟 Filter khusus status pending kamu
+    },
+    include: {
+      user: {
+        select: {
+          name: true,
+          email: true,
+        },
+      },
+    },
+    orderBy: {
+      createdAt: "desc", // Transaksi terbaru muncul di atas
+    },
+  });
+
+  return { data: transactions };
 };
