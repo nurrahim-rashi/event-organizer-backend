@@ -11,6 +11,21 @@ export const getDashboardStatsService = async (userId: number, role: string) => 
       },
     });
 
+    const managedEvents = await prisma.event.findMany({
+      where: {
+        organizerId: userId,
+        deletedAt: null,
+      },
+      select: {
+        id: true,
+        name: true,
+        startDate: true,
+      },
+      orderBy: {
+        startDate: "desc",
+      },
+    });
+
     // 2. Hitung total tiket terjual dari event milik EO ini
     const ticketsSoldAggregation = await prisma.ticketType.aggregate({
       where: {
@@ -45,6 +60,7 @@ export const getDashboardStatsService = async (userId: number, role: string) => 
       activeEventsCount,
       ticketsSold: ticketsSoldAggregation._sum.booked || 0,
       totalEarnings: totalEarnings,
+      managedEvents,
     };
   } else {
     // 🌟 JIKA CUSTOMER BIASA: Hitung tiket yang dia miliki
