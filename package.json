@@ -28,6 +28,7 @@
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
+    "@types/nodemailer": "^8.0.1",
     "argon2": "^0.44.0",
     "bcrypt": "^6.0.0",
     "cloudinary": "^2.10.0",
@@ -35,10 +36,11 @@
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "express-validator": "^7.3.2",
+    "handlebars": "^4.7.9",
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.2.0",
     "node-cron": "^4.5.0",
-    "nodemailer": "^9.0.1",
+    "nodemailer": "^9.0.3",
     "pg": "^8.22.0",
     "zod": "^4.4.3"
   }
