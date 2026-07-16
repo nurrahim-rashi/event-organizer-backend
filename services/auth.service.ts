@@ -3,7 +3,8 @@ import { prisma } from "../lib/prisma.js";
 import { ApiError } from "../utils/api-error.js";
 import argon from "argon2";
 import jwt from "jsonwebtoken";
-import { RegisterSchema, LoginSchema } from "../validators/auth.validator.js";
+import { RegisterSchema, LoginSchema, ForgotPasswordSchema, ResetPasswordSchema } from "../validators/auth.validator.js";
+import { sendMail } from "../lib/mail.js";
 
 export const registerService = async (
     body: RegisterSchema
@@ -61,3 +62,52 @@ export const loginService = async (body: LoginSchema) => {
         accessToken,
     };
 };
+
+export const forgotPasswordService = async (body: ForgotPasswordSchema) => {
+    const user = await prisma.user.findUnique({
+        where: {email: body.email},
+    });
+
+    if (!user) {
+        return {message: "Send email success"}
+    };
+
+    const payload = {id: user.id, role: user.role};
+    const token = jwt.sign(payload, process.env.JWT_SECRET_RESET!, {
+        expiresIn: "15m"
+    });
+
+    sendMail({
+        to: body.email,
+        subject: "Reset Password",
+        templateName: "reset-password.hbs",
+        context: {
+            name: user.name,
+            resetUrl: `${process.env.BASE_URL_FE}/reset-password/${token}`
+        },
+    });
+
+    return {message: "Send mail success"};
+};
+
+export const resetPasswordService = async (
+    body: ResetPasswordSchema,
+    userId: number,
+) => {
+    const user = await prisma.user.findUnique({
+        where: {id: userId},
+    });
+
+    if (!user) {
+        throw new ApiError("User not found", 404);
+    }
+
+    const hashedPassword = await argon.hash(body.password);
+
+    await prisma.user.update({
+        where: {id: userId},
+        data: {password: hashedPassword},
+    });
+
+    return {message: "Reset password success"};
+}
