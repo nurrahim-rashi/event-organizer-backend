@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { forgotPasswordService, loginService, registerService, resetPasswordService } from "../services/auth.service.js";
+import { AuthenticatedRequest } from "../middlewares/auth.middleware.js";
 
 export const registerController = async (req: Request, res: Response) => {
     const result = await registerService(req.body);
@@ -17,7 +18,7 @@ export const forgotPasswordController = async (req: Request, res: Response) => {
 };
 
 export const resetPasswordController = async (req: Request, res: Response) => {
-    const userId = res.locals.user.id;
+    const userId = (req as AuthenticatedRequest).user.id;
     const result = await resetPasswordService(req.body, userId);
     res.status(200).send(result)
 };

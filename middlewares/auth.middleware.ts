@@ -16,32 +16,30 @@ export interface AuthenticatedRequest extends Request {
   };
 }
 
-export const verifyToken = (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  try {
-    const authHeader = req.headers.authorization;
+export const verifyToken = (secretKey: string) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+      try {
+      const authHeader = req.headers.authorization;
 
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      throw new ApiError("Unauthorized, token missing", 401);
+      if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        throw new ApiError("Unauthorized, token missing", 401);
+      }
+
+      const token = authHeader.split(" ")[1];
+
+      const decoded = jwt.verify(token, secretKey) as {
+        id: number;
+        role: string;
+      };
+
+      (req as AuthenticatedRequest).user = {
+        id: decoded.id,
+        role: decoded.role,
+      };
+
+      next();
+    } catch (error: any) {
+      next(new ApiError(error.message || "Invalid Token", 401));
     }
-
-    const token = authHeader.split(" ")[1];
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as {
-      id: number;
-      role: string;
-    };
-
-    (req as AuthenticatedRequest).user = {
-      id: decoded.id,
-      role: decoded.role,
-    };
-
-    next();
-  } catch (error: any) {
-    next(new ApiError(error.message || "Invalid Token", 401));
-  }
+  };
 };
