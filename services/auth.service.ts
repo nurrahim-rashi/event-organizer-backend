@@ -1,113 +1,110 @@
-import { User } from "../generated/prisma/client.js";
 import { prisma } from "../lib/prisma.js";
 import { ApiError } from "../utils/api-error.js";
 import argon from "argon2";
 import jwt from "jsonwebtoken";
-import { RegisterSchema, LoginSchema, ForgotPasswordSchema, ResetPasswordSchema } from "../validators/auth.validator.js";
+import {
+  RegisterSchema,
+  LoginSchema,
+  ForgotPasswordSchema,
+  ResetPasswordSchema,
+} from "../validators/auth.validator.js";
 import { sendMail } from "../lib/mail.js";
+import { Role } from "../generated/prisma/enums.js";
 
-export const registerService = async (
-    body: RegisterSchema
-) => {
+export const registerService = async (body: RegisterSchema) => {
+  const existingUser = await prisma.user.findUnique({
+    where: { email: body.email },
+  });
 
-    const user = await prisma.user.findUnique({
-        where: {email: body.email},
-    });
+  if (existingUser) {
+    throw new ApiError("Email already exists", 400);
+  }
 
-    if (user) {
-        throw new ApiError("Email already exist", 400);
-    }
+  const hashedPassword = await argon.hash(body.password);
+  const generatedReferralCode =
+    "REF-" + Math.random().toString(36).substring(2, 8).toUpperCase();
 
-    const hashedPassword = await argon.hash(body.password);
-    const generatedReferralCode = "REF-" + Math.random().toString(36).substring(2, 8).toUpperCase();
+  await prisma.user.create({
+    data: {
+      name: body.name,
+      email: body.email,
+      password: hashedPassword,
+      role: (body.role as Role) || Role.USER,
+      referralCode: generatedReferralCode,
+    },
+  });
 
-    await prisma.user.create({
-        data: {
-            name: body.name,
-            email: body.email,
-            password: hashedPassword,
-            role: body.role || "USER",
-            referralCode: generatedReferralCode,
-        },
-    });
-
-    return {
-        message: "Register success"
-    };
+  return { message: "Register success" };
 };
 
 export const loginService = async (body: LoginSchema) => {
-    const user = await prisma.user.findUnique({
-        where: {email: body.email}
-    });
+  const user = await prisma.user.findUnique({
+    where: { email: body.email },
+  });
 
-    if (!user) {
-        throw new ApiError("Invalid credentials", 400);
-    }
+  if (!user) {
+    throw new ApiError("Invalid credentials", 400);
+  }
 
-    const isPassMatch = await argon.verify(user.password, body.password);
+  const isPassMatch = await argon.verify(user.password, body.password);
+  if (!isPassMatch) {
+    throw new ApiError("Invalid credentials", 400);
+  }
 
-    if (!isPassMatch) {
-        throw new ApiError("Invalid credentials", 400);
-    }
+  const payload = { id: user.id, role: user.role };
 
-    const payload = {id: user.id, role: user.role};
-    const accessToken = jwt.sign(payload, process.env.JWT_SECRET!, {
-        expiresIn: "2h",
-    });
+  const accessToken = jwt.sign(payload, process.env.JWT_SECRET!, {
+    expiresIn: "24h",
+  });
 
-    const {password, ...userWithoutPassword} = user;
-    return {
-        ...userWithoutPassword,
-        accessToken,
-    };
+  const { password, ...userWithoutPassword } = user;
+  return {
+    user: userWithoutPassword,
+    accessToken,
+  };
 };
 
 export const forgotPasswordService = async (body: ForgotPasswordSchema) => {
-    const user = await prisma.user.findUnique({
-        where: {email: body.email},
-    });
+  const user = await prisma.user.findUnique({
+    where: { email: body.email },
+  });
 
-    if (!user) {
-        return {message: "Send email success"}
-    };
+  if (!user) {
+    return { message: "Send email success" };
+  }
 
-    const payload = {id: user.id, role: user.role};
-    const token = jwt.sign(payload, process.env.JWT_SECRET_RESET!, {
-        expiresIn: "15m"
-    });
+  const payload = { id: user.id, role: user.role };
+  const token = jwt.sign(payload, process.env.JWT_SECRET_RESET!, {
+    expiresIn: "15m",
+  });
 
-    sendMail({
-        to: body.email,
-        subject: "Reset Password",
-        templateName: "reset-password.hbs",
-        context: {
-            name: user.name,
-            resetUrl: `${process.env.BASE_URL_FE}/reset-password/${token}`
-        },
-    });
+  sendMail({
+    to: body.email,
+    subject: "Reset Password",
+    templateName: "reset-password.hbs",
+    context: {
+      name: user.name,
+      resetUrl: `${process.env.BASE_URL_FE}/reset-password/${token}`,
+    },
+  });
 
-    return {message: "Send mail success"};
+  return { message: "Send mail success" };
 };
 
 export const resetPasswordService = async (
-    body: ResetPasswordSchema,
-    userId: number,
+  body: ResetPasswordSchema,
+  userId: number,
 ) => {
-    const user = await prisma.user.findUnique({
-        where: {id: userId},
-    });
+  const hashedPassword = await argon.hash(body.password);
 
-    if (!user) {
-        throw new ApiError("User not found", 404);
-    }
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
+    data: { password: hashedPassword },
+  });
 
-    const hashedPassword = await argon.hash(body.password);
+  if (!updatedUser) {
+    throw new ApiError("Failed to update password", 500);
+  }
 
-    await prisma.user.update({
-        where: {id: userId},
-        data: {password: hashedPassword},
-    });
-
-    return {message: "Reset password success"};
-}
+  return { message: "Reset password success" };
+};
