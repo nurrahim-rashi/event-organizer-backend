@@ -6,8 +6,8 @@ import { asAuthHandler } from "../utils/asAuthHandler.js";
 const dashboardRoutes = express.Router();
 
 dashboardRoutes.get(
-    "/stats", 
-    verifyToken, 
+    "/stats",
+    verifyToken(process.env.JWT_SECRET! as string), 
     asAuthHandler(getDashboardStatsController),
 );
 

@@ -7,6 +7,9 @@ export const globalError = (
   res: Response,
   next: NextFunction,
 ) => {
+  console.error("--- GLOBAL ERROR HANDLER ---");
+  console.error("Pesan Error:", err.message);
+  console.error("Stack Trace:", err.stack);
   const message = err.message || "Something went wrong!";
   const status = err.statusCode || 500;
 
