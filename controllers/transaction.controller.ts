@@ -1,96 +1,55 @@
-import { Request, RequestHandler, Response } from "express";
-import { AuthenticatedRequest } from "../middlewares/auth.middleware.js";
+import { Request, Response } from "express";
 import {
   createTransactionService,
-  getTransactionByIdService,
-  updateTransactionStatusService,
-  getIncomingTransactionsByEventService
+  uploadPaymentService,
+  acceptOrRejectTransactionService,
 } from "../services/transaction.service.js";
-import { ApiError } from "../utils/api-error.js";
-import { TransactionStatus } from "../generated/prisma/enums.js";
-import { success } from "zod";
 
-export const getTransactionsByEventController = async (
-  req: Request,
-  res: Response,
-) => {
-  const userId = (req as AuthenticatedRequest).user?.id;
-
-  if (!userId) {
-    throw new ApiError("Unauthorized", 401);
-  }
-
-  const eventId = Number(req.params.eventId);
-  const result = await getTransactionByIdService(userId, eventId);
-
-  res.status(200).json({
-    success: true,
-    ...result,
-  });
-};
-
+// 1. Controller untuk membuat transaksi
 export const createTransactionController = async (
   req: Request,
   res: Response,
 ) => {
-  const userId = (req as AuthenticatedRequest).user?.id;
-
-  if (!userId) {
-    throw new ApiError("Unauthorized", 401);
-  }
-
-  const { eventId, items } = req.body;
-  const result = await createTransactionService(userId, Number(eventId), items);
-
-  res.status(201).json({
-    success: true,
-    ...result,
+  const userId = res.locals.user.id;
+  const result = await createTransactionService(req.body, userId);
+  res.status(201).send({
+    message: "Transaction created successfully",
+    data: result,
   });
 };
 
-export const updateTransactionStatusController = async (
+// 2. Controller untuk upload bukti pembayaran
+export const uploadPaymentController = async (req: Request, res: Response) => {
+  const userId = res.locals.user.id;
+  const transactionId = Number(req.params.id);
+  const paymentProof = req.file?.path; // Asumsi menggunakan multer untuk upload
+
+  if (!paymentProof) {
+    return res.status(400).send({ message: "Payment proof is required" });
+  }
+
+  const result = await uploadPaymentService(
+    transactionId,
+    userId,
+    paymentProof,
+  );
+  res.status(200).send({
+    message: "Payment proof uploaded, waiting for admin confirmation",
+    data: result,
+  });
+};
+
+// 3. Controller untuk Admin (Accept/Reject)
+export const acceptOrRejectTransactionController = async (
   req: Request,
   res: Response,
 ) => {
-  const userId = (req as AuthenticatedRequest).user?.id;
-  if (!userId) {
-    throw new ApiError("Unauthorized", 401);
-  }
+  const transactionId = Number(req.params.id);
+  const { status } = req.body; // "DONE" atau "REJECTED"
 
-  const transactionId = Number(req.params.transactionId);
-  if (isNaN(transactionId)) {
-    throw new ApiError("Invalid transaction ID", 400)
-  }
-
-  const {newStatus} = req.body as {newStatus: TransactionStatus};
-  if (!newStatus) {
-    throw new ApiError("Status is required", 400)
-  }
-
-  const result = await updateTransactionStatusService(
-    req as AuthenticatedRequest,
-    transactionId,
-    newStatus,
-  );
-
-  res.status(200).json({
-    success: true,
-    ...result,
-  });
-};
-
-export const getIncomingTransactionsController = async (
-  req: AuthenticatedRequest,
-  res: Response
-) => {
-  const eventId = Number(req.params.eventId);
-  const organizerId = Number(req.user.id);
-
-  // Jika service melempar error, Express 5 akan otomatis menangkapnya
-  const result = await getIncomingTransactionsByEventService(eventId, organizerId);
-  
+  const result = await acceptOrRejectTransactionService(transactionId, status);
   res.status(200).send({
-    success: true,
-    data: result.data
+    message: `Transaction has been ${status.toLowerCase()}`,
+    data: result,
   });
 };
