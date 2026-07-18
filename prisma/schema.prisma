@@ -24,6 +24,7 @@ model User {
   referralSent     ReferralUsage[] @relation("Referrer")
   reviews          Review[]
   transactions     Transaction[]
+  points           Int             @default(0)
 
   @@map("users")
 }
@@ -100,6 +101,7 @@ model Transaction {
   pointUsed    Int?
   createdAt    DateTime          @default(now())
   expiredAt    DateTime
+  updatedAt    DateTime          @updatedAt
   review       Review?
   items        TransactionItem[]
   coupon       Coupon?           @relation(fields: [couponId], references: [id])
@@ -170,11 +172,11 @@ enum EventCategory {
 enum TransactionStatus {
   WAITING_PAYMENT
   WAITING_CONFIRMATION
-  PAID
-  CANCELLED
+  DONE   
+  REJECTED
   EXPIRED
-  DONE
-}
+  CANCELLED
+  }
 
 enum TicketName {
   GOLD

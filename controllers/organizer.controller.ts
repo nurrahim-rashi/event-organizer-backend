@@ -4,7 +4,9 @@ import { getOrganizerProfileData } from "../services/organizer.service.js";
 export const getProfile = async (req: Request, res: Response) => {
   const { id } = req.params;
 
-  const organizerId = parseInt(id, 10);
+  const idString = Array.isArray(id) ? id[0] : id;
+
+  const organizerId = parseInt(idString, 10);
 
   if (isNaN(organizerId)) {
     const error = new Error("Invalid Organizer ID format");
