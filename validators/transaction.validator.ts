@@ -22,7 +22,7 @@ export const createTransactionSchema = z.object({
 
   voucherId: z.number().int().optional(),
   couponId: z.number().int().optional(),
-  usePoints: z.boolean().optional(),
+  usePoints: z.number().optional(),
 });
 
 export type CreateTransactionSchema = z.infer<typeof createTransactionSchema>;
