@@ -3,6 +3,8 @@ import {
   createTransactionController,
   uploadPaymentController,
   acceptOrRejectTransactionController,
+  cancelTransactionController,
+  getActiveTransactionController,
 } from "../controllers/transaction.controller.js";
 import { verifyRole, verifyToken } from "../middlewares/auth.middleware.js";
 import { validate } from "../middlewares/validation.middleware.js";
@@ -11,7 +13,6 @@ import { createTransactionSchema } from "../validators/transaction.validator.js"
 const transactionRoutes = express.Router();
 
 // 1. User: Membuat transaksi tiket
-// di routes/transaction.routes.ts
 transactionRoutes.post(
   "/checkout",
   verifyToken(process.env.JWT_SECRET!),
@@ -21,11 +22,10 @@ transactionRoutes.post(
 );
 
 // 2. User: Mengunggah bukti pembayaran (Upload)
-// Catatan: Pastikan Anda memiliki middleware untuk menangani upload file (seperti multer)
 transactionRoutes.patch(
   "/:id/upload",
   verifyToken(process.env.JWT_SECRET!),
-  verifyRole(["USER"]),
+  verifyRole(["USER", "ADMIN"]),
   uploadPaymentController,
 );
 
@@ -33,8 +33,22 @@ transactionRoutes.patch(
 transactionRoutes.patch(
   "/:id/status",
   verifyToken(process.env.JWT_SECRET!),
-  verifyRole(["ADMIN", "SUPERADMIN"]), // Sesuaikan dengan peran yang berhak memproses
+  verifyRole(["ADMIN", "SUPERADMIN"]),
   acceptOrRejectTransactionController,
+);
+
+// Tambahkan di routes/transaction.routes.ts
+transactionRoutes.patch(
+  "/:id/cancel",
+  verifyToken(process.env.JWT_SECRET!),
+  verifyRole(["USER", "SUPERADMIN"]),
+  cancelTransactionController,
+);
+
+transactionRoutes.get(
+  "/active",
+  verifyToken(process.env.JWT_SECRET!),
+  getActiveTransactionController,
 );
 
 export { transactionRoutes };
