@@ -97,6 +97,11 @@ export const createTransactionService = async (
         expiredAt: new Date(Date.now() + 2 * 60 * 60 * 1000), // 2 Jam
         items: { create: transactionItemsData },
       },
+      include: {
+        items: { include: { ticketType: true } },
+        voucher: true,
+        coupon: true,
+      },
     });
 
     // 5. Update Booked
@@ -228,7 +233,11 @@ export const getActiveTransactionService = async (userId: number) => {
       },
       expiredAt: { gt: new Date() },
     },
-    include: { items: { include: { ticketType: true } } },
+    include: {
+      items: { include: { ticketType: true } },
+      voucher: true,
+      coupon: true,
+    },
   });
 };
 
@@ -269,7 +278,12 @@ export const getTransactionByIdService = async (
 ) => {
   const transaction = await prisma.transaction.findUnique({
     where: { id: transactionId },
-    include: { event: true, items: { include: { ticketType: true } } },
+    include: {
+      event: true,
+      items: { include: { ticketType: true } },
+      voucher: true,
+      coupon: true,
+    },
   });
 
   if (!transaction) throw new Error("Transaction not found");
