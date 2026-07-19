@@ -234,6 +234,7 @@ export const getActiveTransactionService = async (userId: number) => {
       expiredAt: { gt: new Date() },
     },
     include: {
+      event: true,
       items: { include: { ticketType: true } },
       voucher: true,
       coupon: true,
