@@ -5,10 +5,12 @@ import {
   acceptOrRejectTransactionController,
   cancelTransactionController,
   getActiveTransactionController,
+  getAllTransactionsController,
 } from "../controllers/transaction.controller.js";
 import { verifyRole, verifyToken } from "../middlewares/auth.middleware.js";
 import { validate } from "../middlewares/validation.middleware.js";
 import { createTransactionSchema } from "../validators/transaction.validator.js";
+import { upload } from "../middlewares/multer.js";
 
 const transactionRoutes = express.Router();
 
@@ -16,7 +18,7 @@ const transactionRoutes = express.Router();
 transactionRoutes.post(
   "/checkout",
   verifyToken(process.env.JWT_SECRET!),
-  verifyRole(["USER", "ADMIN", "SUPERADMIN"]),
+  verifyRole(["USER", "ADMIN"]),
   validate(createTransactionSchema),
   createTransactionController,
 );
@@ -26,6 +28,7 @@ transactionRoutes.patch(
   "/:id/upload",
   verifyToken(process.env.JWT_SECRET!),
   verifyRole(["USER", "ADMIN"]),
+  upload.single("paymentProof"),
   uploadPaymentController,
 );
 
@@ -46,9 +49,16 @@ transactionRoutes.patch(
 );
 
 transactionRoutes.get(
-  "/active",
+  "/checkout",
   verifyToken(process.env.JWT_SECRET!),
   getActiveTransactionController,
 );
 
 export { transactionRoutes };
+
+transactionRoutes.get(
+  "/",
+  verifyToken(process.env.JWT_SECRET!),
+  verifyRole(["USER", "ADMIN", "SUPERADMIN"]),
+  getAllTransactionsController,
+);
