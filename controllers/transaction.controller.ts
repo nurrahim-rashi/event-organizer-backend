@@ -39,7 +39,7 @@ export const uploadPaymentController = async (req: Request, res: Response) => {
   const result = await uploadPaymentService(
     transactionId,
     userId,
-    paymentProof, // Sesuaikan dengan apa yang dibutuhkan service-mu
+    paymentProof,
   );
 
   res.status(200).send({
