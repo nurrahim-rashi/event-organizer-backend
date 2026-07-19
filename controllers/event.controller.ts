@@ -5,8 +5,11 @@ import {
   createEventService,
   updateEventService,
   deleteEventService,
+  getEventAttendeeService,
 } from "../services/event.service.js";
 import { paginationQuerySchema } from "../validators/event.validator.js";
+import { success } from "zod";
+import { ApiError } from "../utils/api-error.js";
 
 export const getEventsController = async (req: Request, res: Response) => {
   const query = paginationQuerySchema.parse(req.query);
@@ -53,4 +56,19 @@ export const deleteEventController = async (req: Request, res: Response) => {
     success: true,
     ...result,
   });
+};
+
+export const getEventAttendeeController = async (req: Request, res: Response) => {
+  const id = Number(req.params.id);
+
+  if(Number.isNaN(id)) {
+    throw new ApiError("Invalid event id", 400);
+  }
+
+  const result = await getEventAttendeeService(id);
+
+  res.status(200).json({
+    success: true,
+    data: result,
+  })
 };

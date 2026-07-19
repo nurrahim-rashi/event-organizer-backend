@@ -1,3 +1,4 @@
+import { body } from "express-validator";
 import { prisma } from "../lib/prisma.js";
 import { ApiError } from "../utils/api-error.js";
 import { PaginationQueryParams } from "../validators/event.validator.js";
@@ -135,4 +136,29 @@ export const deleteEventService = async (id: number) => {
 
   await prisma.event.update({ where: { id }, data: { deletedAt: new Date() } });
   return { message: "Event deleted successfully." };
+};
+
+export const getEventAttendeeService = async (eventId: number) => {
+  const attendees = await prisma.transaction.findMany({
+    where: {
+      eventId,
+      status: "DONE"
+    },
+    select: {
+      id: true,
+      createdAt: true,
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      },
+    },
+    orderBy: {
+      createdAt: "asc",
+    },
+  });
+
+  return attendees;
 };

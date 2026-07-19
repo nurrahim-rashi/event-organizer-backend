@@ -67,6 +67,7 @@ export const getDashboardStatsService = async (userId: number, role: string) => 
     const totalTicketsOwned = await prisma.transaction.count({
       where: {
         userId: userId,
+        status: "DONE",
       },
     });
 
