@@ -147,7 +147,6 @@ export const acceptOrRejectTransactionService = async (
           data: { booked: { decrement: item.qty } },
         });
       }
-      // Tambahkan logic restore voucher/coupon jika perlu
     }
   });
 };
@@ -242,4 +241,21 @@ export const getAllTransactionsService = async (userId: number) => {
     },
     orderBy: { createdAt: "desc" },
   });
+};
+
+export const getTransactionByIdService = async (
+  transactionId: number,
+  userId: number,
+) => {
+  const transaction = await prisma.transaction.findUnique({
+    where: { id: transactionId },
+    include: {
+      event: { select: { name: true } },
+      items: { include: { ticketType: true } },
+    },
+  });
+
+  if (!transaction) throw new ApiError("Transaction not found", 404);
+
+  return transaction;
 };
