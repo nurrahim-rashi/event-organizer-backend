@@ -101,7 +101,7 @@ model Transaction {
   pointUsed    Int?
   createdAt    DateTime          @default(now())
   expiredAt    DateTime
-  updatedAt    DateTime          @updatedAt
+  updatedAt    DateTime          @default(now()) @updatedAt
   review       Review?
   items        TransactionItem[]
   coupon       Coupon?           @relation(fields: [couponId], references: [id])
@@ -172,11 +172,11 @@ enum EventCategory {
 enum TransactionStatus {
   WAITING_PAYMENT
   WAITING_CONFIRMATION
-  DONE   
+  DONE
   REJECTED
   EXPIRED
   CANCELLED
-  }
+}
 
 enum TicketName {
   GOLD

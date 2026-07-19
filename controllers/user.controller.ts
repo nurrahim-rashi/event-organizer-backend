@@ -19,6 +19,10 @@ export const getUsersController = async (req: Request, res: Response) => {
 export const getUserController = async (req: Request, res: Response) => {
   const id = Number(req.params.id);
 
+  if(isNaN(id)) {
+    return res.status(400).json({ message: "ID User tidak valid" });
+  }
+
   const user = await getUserService(id);
 
   res.status(200).send({

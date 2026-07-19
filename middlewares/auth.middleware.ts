@@ -19,10 +19,12 @@ export interface AuthenticatedRequest extends Request {
 
 export const verifyToken = (secretKey: string) => {
   return (req: Request, res: Response, next: NextFunction) => {
+    console.log("--- DEBUG: Masuk ke verifyToken ---");
     try {
       const authHeader = req.headers.authorization;
 
       if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        console.log("--- DEBUG: Token hilang atau format salah ---");
         throw new ApiError("Unauthorized, token missing", 401);
       }
 
@@ -32,6 +34,7 @@ export const verifyToken = (secretKey: string) => {
         id: number;
         role: Role;
       };
+      console.log("--- DEBUG: Token berhasil diverifikasi untuk user:", decoded.id, " ---");
       res.locals.user = { id: decoded.id, role: decoded.role };
 
       (req as AuthenticatedRequest).user = {
@@ -41,6 +44,7 @@ export const verifyToken = (secretKey: string) => {
 
       next();
     } catch (error: any) {
+      console.log("--- DEBUG: Gagal di verifyToken:", error.message, " ---");
       next(new ApiError(error.message || "Invalid Token", 401));
     }
   };
