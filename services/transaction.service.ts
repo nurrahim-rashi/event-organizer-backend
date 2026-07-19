@@ -233,13 +233,33 @@ export const getActiveTransactionService = async (userId: number) => {
 };
 
 export const getAllTransactionsService = async (userId: number) => {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+
+  if (!user) throw new Error("User not found");
+
+  // Jika Superadmin, ambil semua transaksi
+  if (user.role === "SUPERADMIN") {
+    return await prisma.transaction.findMany({
+      include: { event: true, items: { include: { ticketType: true } } },
+    });
+  }
+
+  // Jika Admin/Organizer, ambil transaksi dari event yang mereka buat
+  if (user.role === "ADMIN") {
+    return await prisma.transaction.findMany({
+      where: {
+        event: {
+          organizerId: userId,
+        },
+      },
+      include: { event: true, items: { include: { ticketType: true } } },
+    });
+  }
+
+  // Jika user biasa, hanya ambil transaksi miliknya sendiri
   return await prisma.transaction.findMany({
-    where: { userId },
-    include: {
-      event: { select: { name: true } },
-      items: { include: { ticketType: true } },
-    },
-    orderBy: { createdAt: "desc" },
+    where: { userId: userId },
+    include: { event: true, items: { include: { ticketType: true } } },
   });
 };
 
@@ -249,13 +269,20 @@ export const getTransactionByIdService = async (
 ) => {
   const transaction = await prisma.transaction.findUnique({
     where: { id: transactionId },
-    include: {
-      event: { select: { name: true } },
-      items: { include: { ticketType: true } },
-    },
+    include: { event: true, items: { include: { ticketType: true } } },
   });
 
-  if (!transaction) throw new ApiError("Transaction not found", 404);
+  if (!transaction) throw new Error("Transaction not found");
 
-  return transaction;
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+
+  const isOwner = transaction.userId === userId;
+  const isEventOrganizer = transaction.event.organizerId === userId;
+  const isSuperAdmin = user?.role === "SUPERADMIN";
+
+  if (isOwner || isEventOrganizer || isSuperAdmin) {
+    return transaction;
+  }
+
+  throw new Error("Unauthorized: You do not have access to this transaction");
 };

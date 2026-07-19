@@ -19,7 +19,7 @@ const transactionRoutes = express.Router();
 transactionRoutes.post(
   "/checkout",
   verifyToken(process.env.JWT_SECRET!),
-  verifyRole(["USER", "ADMIN"]),
+  verifyRole(["USER"]),
   validate(createTransactionSchema),
   createTransactionController,
 );
@@ -28,7 +28,7 @@ transactionRoutes.post(
 transactionRoutes.patch(
   "/:id/upload",
   verifyToken(process.env.JWT_SECRET!),
-  verifyRole(["USER", "ADMIN"]),
+  verifyRole(["USER"]),
   upload.single("paymentProof"),
   uploadPaymentController,
 );
@@ -45,13 +45,14 @@ transactionRoutes.patch(
 transactionRoutes.patch(
   "/:id/cancel",
   verifyToken(process.env.JWT_SECRET!),
-  verifyRole(["USER", "SUPERADMIN"]),
+  verifyRole(["USER", "ADMIN", "SUPERADMIN"]),
   cancelTransactionController,
 );
 
 transactionRoutes.get(
   "/checkout",
   verifyToken(process.env.JWT_SECRET!),
+  verifyRole(["USER"]),
   getActiveTransactionController,
 );
 
