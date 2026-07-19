@@ -11,7 +11,7 @@ export const getDashboardStatsService = async (userId: number, role: string) => 
       },
     });
 
-    const managedEvents = await prisma.event.findMany({
+    const managedEventsRaw = await prisma.event.findMany({
       where: {
         organizerId: userId,
         deletedAt: null,
@@ -20,46 +20,48 @@ export const getDashboardStatsService = async (userId: number, role: string) => 
         id: true,
         name: true,
         startDate: true,
+        _count: {
+          select: {
+            transactions: {
+              where: {
+                status: "DONE"
+              }
+            }
+          }
+        }
       },
       orderBy: {
         startDate: "desc",
       },
     });
 
-    // 2. Hitung total tiket terjual dari event milik EO ini
-    const ticketsSoldAggregation = await prisma.ticketType.aggregate({
+    const managedEvents = managedEventsRaw.map((event) => ({
+      id: event.id,
+      name: event.name,
+      startDate: event.startDate,
+      ticketsSold: event._count.transactions,
+    }));
+
+    const stats = await prisma.transaction.aggregate({
       where: {
         event: {
           organizerId: userId,
+          deletedAt: null,
         },
-        deletedAt: null,
+        status: "DONE",
       },
       _sum: {
-        booked: true,
-      }
-    });
-
-    // 3. Hitung total pendapatan dari event milik EO ini (asumsi ada field price di Ticket)
-    const allTicketTypes = await prisma.ticketType.findMany({
-      where: {
-        event: {
-          organizerId: userId,
-        },
+        totalPrice: true,
       },
-      select: {
-        booked: true,
-        price: true,
+      _count: {
+        id: true,
       }
     });
-
-    const totalEarnings = allTicketTypes.reduce((sum, ticket) => {
-        return sum + (ticket.booked * ticket.price);
-    }, 0);
 
     return {
       activeEventsCount,
-      ticketsSold: ticketsSoldAggregation._sum.booked || 0,
-      totalEarnings: totalEarnings,
+      ticketsSold: stats._count.id || 0,
+      totalEarnings: stats._sum.totalPrice || 0,
       managedEvents,
     };
   } else {
