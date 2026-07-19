@@ -5,6 +5,7 @@ import {
   getEventController,
   updateEventController,
   deleteEventController,
+  getEventAttendeeController,
 } from "../controllers/event.controller.js";
 
 export const eventRoutes = express.Router();
@@ -14,3 +15,4 @@ eventRoutes.get("/:id", getEventController);
 eventRoutes.post("/", createEventController);
 eventRoutes.patch("/:id", updateEventController);
 eventRoutes.delete("/:id", deleteEventController);
+eventRoutes.get("/:id/attendees", getEventAttendeeController);
