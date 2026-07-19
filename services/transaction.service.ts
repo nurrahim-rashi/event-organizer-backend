@@ -15,12 +15,8 @@ export const createTransactionService = async (
       where: {
         userId,
         status: {
-          in: [
-            TransactionStatus.WAITING_PAYMENT,
-            TransactionStatus.WAITING_CONFIRMATION,
-          ],
+          in: [TransactionStatus.WAITING_PAYMENT],
         },
-        // Pastikan hanya mencari yang belum expired
         expiredAt: { gt: new Date() },
       },
     });
@@ -229,13 +225,21 @@ export const getActiveTransactionService = async (userId: number) => {
     where: {
       userId,
       status: {
-        in: [
-          TransactionStatus.WAITING_PAYMENT,
-          TransactionStatus.WAITING_CONFIRMATION,
-        ],
+        in: [TransactionStatus.WAITING_PAYMENT],
       },
       expiredAt: { gt: new Date() },
     },
     include: { items: { include: { ticketType: true } } },
+  });
+};
+
+export const getAllTransactionsService = async (userId: number) => {
+  return await prisma.transaction.findMany({
+    where: { userId },
+    include: {
+      event: { select: { name: true } },
+      items: { include: { ticketType: true } },
+    },
+    orderBy: { createdAt: "desc" },
   });
 };

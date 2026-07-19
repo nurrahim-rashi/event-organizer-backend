@@ -5,6 +5,7 @@ import {
   acceptOrRejectTransactionService,
   cancelTransactionService,
   getActiveTransactionService,
+  getAllTransactionsService,
 } from "../services/transaction.service.js";
 
 // 1. Controller untuk membuat transaksi
@@ -24,17 +25,22 @@ export const createTransactionController = async (
 export const uploadPaymentController = async (req: Request, res: Response) => {
   const userId = res.locals.user.id;
   const transactionId = Number(req.params.id);
-  const paymentProof = req.file?.path;
 
-  if (!paymentProof) {
+  // Karena memoryStorage, file ada di req.file.buffer, bukan req.file.path
+  const file = req.file;
+
+  if (!file) {
     return res.status(400).send({ message: "Payment proof is required" });
   }
+
+  const paymentProof = file.originalname;
 
   const result = await uploadPaymentService(
     transactionId,
     userId,
-    paymentProof,
+    paymentProof, // Sesuaikan dengan apa yang dibutuhkan service-mu
   );
+
   res.status(200).send({
     message: "Payment proof uploaded, waiting for admin confirmation",
     data: result,
@@ -74,5 +80,14 @@ export const getActiveTransactionController = async (
 ) => {
   const userId = res.locals.user.id;
   const result = await getActiveTransactionService(userId);
+  res.status(200).send({ data: result });
+};
+
+export const getAllTransactionsController = async (
+  req: Request,
+  res: Response,
+) => {
+  const userId = res.locals.user.id;
+  const result = await getAllTransactionsService(userId);
   res.status(200).send({ data: result });
 };
