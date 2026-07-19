@@ -213,7 +213,6 @@ export const cancelTransactionService = async (
       });
     }
 
-    // 3. Balikin Point jika ada
     if (transaction.pointUsed && transaction.pointUsed > 0) {
       await tx.user.update({
         where: { id: userId },
@@ -222,5 +221,21 @@ export const cancelTransactionService = async (
     }
 
     return { message: "Transaction cancelled" };
+  });
+};
+
+export const getActiveTransactionService = async (userId: number) => {
+  return await prisma.transaction.findFirst({
+    where: {
+      userId,
+      status: {
+        in: [
+          TransactionStatus.WAITING_PAYMENT,
+          TransactionStatus.WAITING_CONFIRMATION,
+        ],
+      },
+      expiredAt: { gt: new Date() },
+    },
+    include: { items: { include: { ticketType: true } } },
   });
 };
