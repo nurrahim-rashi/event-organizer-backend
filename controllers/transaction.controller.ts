@@ -6,6 +6,7 @@ import {
   cancelTransactionService,
   getActiveTransactionService,
   getAllTransactionsService,
+  getTransactionByIdService,
 } from "../services/transaction.service.js";
 
 // 1. Controller untuk membuat transaksi
@@ -89,5 +90,16 @@ export const getAllTransactionsController = async (
 ) => {
   const userId = res.locals.user.id;
   const result = await getAllTransactionsService(userId);
+  res.status(200).send({ data: result });
+};
+
+export const getTransactionByIdController = async (
+  req: Request,
+  res: Response,
+) => {
+  const transactionId = Number(req.params.id);
+  const userId = res.locals.user.id;
+
+  const result = await getTransactionByIdService(transactionId, userId);
   res.status(200).send({ data: result });
 };

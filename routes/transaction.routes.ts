@@ -6,6 +6,7 @@ import {
   cancelTransactionController,
   getActiveTransactionController,
   getAllTransactionsController,
+  getTransactionByIdController,
 } from "../controllers/transaction.controller.js";
 import { verifyRole, verifyToken } from "../middlewares/auth.middleware.js";
 import { validate } from "../middlewares/validation.middleware.js";
@@ -54,11 +55,18 @@ transactionRoutes.get(
   getActiveTransactionController,
 );
 
-export { transactionRoutes };
-
 transactionRoutes.get(
   "/",
   verifyToken(process.env.JWT_SECRET!),
   verifyRole(["USER", "ADMIN", "SUPERADMIN"]),
   getAllTransactionsController,
 );
+
+transactionRoutes.get(
+  "/:id",
+  verifyToken(process.env.JWT_SECRET!),
+  verifyRole(["USER", "ADMIN", "SUPERADMIN"]),
+  getTransactionByIdController,
+);
+
+export { transactionRoutes };
