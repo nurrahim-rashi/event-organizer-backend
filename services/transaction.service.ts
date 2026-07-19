@@ -10,6 +10,28 @@ export const createTransactionService = async (
   const { eventId, items, voucherId, couponId, usePoints } = body;
 
   return await prisma.$transaction(async (tx) => {
+    // --- Pengecekan Transaksi Aktif ---
+    const activeTransaction = await tx.transaction.findFirst({
+      where: {
+        userId,
+        status: {
+          in: [
+            TransactionStatus.WAITING_PAYMENT,
+            TransactionStatus.WAITING_CONFIRMATION,
+          ],
+        },
+        // Pastikan hanya mencari yang belum expired
+        expiredAt: { gt: new Date() },
+      },
+    });
+
+    if (activeTransaction) {
+      throw new ApiError(
+        "You have an ongoing transaction. Please finish payment or cancel it first.",
+        400,
+      );
+    }
+
     let totalPrice = 0;
     const transactionItemsData = [];
 
@@ -156,5 +178,49 @@ export const uploadPaymentService = async (
       paymentProof,
       status: TransactionStatus.WAITING_CONFIRMATION,
     },
+  });
+};
+
+export const cancelTransactionService = async (
+  transactionId: number,
+  userId: number,
+) => {
+  return await prisma.$transaction(async (tx) => {
+    const transaction = await tx.transaction.findUnique({
+      where: { id: transactionId },
+      include: { items: true },
+    });
+
+    if (!transaction || transaction.userId !== userId)
+      throw new ApiError("Transaction not found", 404);
+
+    // Hanya boleh dicancel jika masih WAITING_PAYMENT
+    if (transaction.status !== TransactionStatus.WAITING_PAYMENT) {
+      throw new ApiError("Cannot cancel this transaction", 400);
+    }
+
+    // 1. Update Status
+    await tx.transaction.update({
+      where: { id: transactionId },
+      data: { status: TransactionStatus.CANCELLED },
+    });
+
+    // 2. Balikin Stok Tiket
+    for (const item of transaction.items) {
+      await tx.ticketType.update({
+        where: { id: item.ticketTypeId },
+        data: { booked: { decrement: item.qty } },
+      });
+    }
+
+    // 3. Balikin Point jika ada
+    if (transaction.pointUsed && transaction.pointUsed > 0) {
+      await tx.user.update({
+        where: { id: userId },
+        data: { points: { increment: transaction.pointUsed } },
+      });
+    }
+
+    return { message: "Transaction cancelled" };
   });
 };
