@@ -8,7 +8,6 @@ import {
   getEventAttendeeService,
 } from "../services/event.service.js";
 import { paginationQuerySchema } from "../validators/event.validator.js";
-import { success } from "zod";
 import { ApiError } from "../utils/api-error.js";
 
 export const getEventsController = async (req: Request, res: Response) => {
@@ -58,10 +57,13 @@ export const deleteEventController = async (req: Request, res: Response) => {
   });
 };
 
-export const getEventAttendeeController = async (req: Request, res: Response) => {
+export const getEventAttendeeController = async (
+  req: Request,
+  res: Response,
+) => {
   const id = Number(req.params.id);
 
-  if(Number.isNaN(id)) {
+  if (Number.isNaN(id)) {
     throw new ApiError("Invalid event id", 400);
   }
 
@@ -70,5 +72,5 @@ export const getEventAttendeeController = async (req: Request, res: Response) =>
   res.status(200).json({
     success: true,
     data: result,
-  })
+  });
 };
