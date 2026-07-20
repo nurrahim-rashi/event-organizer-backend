@@ -1,18 +1,22 @@
 import express from "express";
-import {
-  createEventController,
-  getEventsController,
-  getEventController,
-  updateEventController,
-  deleteEventController,
-  getEventAttendeeController,
-} from "../controllers/event.controller.js";
+import { upload } from "../middlewares/multer.js";
+import * as eventController from "../controllers/event.controller.js";
 
 export const eventRoutes = express.Router();
 
-eventRoutes.get("/", getEventsController);
-eventRoutes.get("/:id", getEventController);
-eventRoutes.post("/", createEventController);
-eventRoutes.patch("/:id", updateEventController);
-eventRoutes.delete("/:id", deleteEventController);
-eventRoutes.get("/:id/attendees", getEventAttendeeController);
+// Route POST dan PATCH harus pakai upload.single("file")
+eventRoutes.post(
+  "/",
+  upload.single("file"),
+  eventController.createEventController,
+);
+eventRoutes.patch(
+  "/:id",
+  upload.single("file"),
+  eventController.updateEventController,
+);
+
+// Route GET tidak butuh multer
+eventRoutes.get("/", eventController.getEventsController);
+eventRoutes.get("/:id", eventController.getEventController);
+eventRoutes.delete("/:id", eventController.deleteEventController);
