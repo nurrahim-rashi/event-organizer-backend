@@ -29,22 +29,33 @@ export const getEventController = async (req: Request, res: Response) => {
 };
 
 export const createEventController = async (req: Request, res: Response) => {
-  const result = await createEventService(req.body);
+  try {
+    const body = { ...req.body };
 
-  res.status(201).json({
-    success: true,
-    ...result,
-  });
+    // Parse karena FormData mengirim data sebagai string
+    if (body.ticketTypes) body.ticketTypes = JSON.parse(body.ticketTypes);
+    if (body.vouchers) body.vouchers = JSON.parse(body.vouchers);
+
+    const result = await createEventService(body, req.file);
+    res.status(201).json(result);
+  } catch (error) {
+    res.status(400).json({ message: (error as Error).message });
+  }
 };
 
 export const updateEventController = async (req: Request, res: Response) => {
-  const id = Number(req.params.id);
-  const result = await updateEventService(id, req.body);
+  try {
+    const id = Number(req.params.id);
+    const body = { ...req.body };
 
-  res.status(200).json({
-    success: true,
-    ...result,
-  });
+    if (body.ticketTypes) body.ticketTypes = JSON.parse(body.ticketTypes);
+    if (body.vouchers) body.vouchers = JSON.parse(body.vouchers);
+
+    const result = await updateEventService(id, body, req.file);
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(400).json({ message: (error as Error).message });
+  }
 };
 
 export const deleteEventController = async (req: Request, res: Response) => {

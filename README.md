@@ -81,15 +81,3 @@ npm run dev
 | **Superadmin** | `admin@example.com`     | `password123` |
 | **Organizer**  | `organizer@example.com` | `password123` |
 | **User**       | `user@example.com`      | `password123` |
-
----
-
-### 💡 Tips Agar README Lebih Menarik:
-
-1. **Gunakan Emoji**: Seperti yang Anda lakukan, ini sangat membantu visual agar tidak membosankan.
-2. **Gunakan Tabel**: Untuk _Tech Stack_ dan _Demo Accounts_, tabel jauh lebih rapi daripada list biasa.
-3. **Code Blocks**: Selalu gunakan ````` untuk perintah terminal agar mudah di-copy oleh orang lain.
-4. **Badges (Opsional)**: Anda bisa menambahkan _badges_ di bagian paling atas (seperti badge versi Node.js atau License) menggunakan [Shields.io](https://www.google.com/search?q=https://shields.io/).
-5. **Screenshot**: Sangat disarankan untuk menambahkan 1-2 screenshot dari halaman Dashboard atau Home agar orang yang membuka repo langsung tahu tampilan aplikasinya.
-
-Apakah Anda ingin saya buatkan juga bagian **"Contributing"** atau **"License"** untuk melengkapi dokumentasinya?
