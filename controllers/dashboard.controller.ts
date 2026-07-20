@@ -6,15 +6,16 @@ export const getDashboardStatsController = async (
   req: AuthenticatedRequest,
   res: Response,
 ) => {
-  console.log("--- DEBUG: Controller stats dipanggil ---");
   const userId = Number(req.user.id);
   const role = req.user.role;
+  const {filter, eventId} = req.query;
 
-  console.log(`--- DEBUG: Memanggil service untuk userId: ${userId}, role: ${role} ---`);
-
-  const stats = await getDashboardStatsService(userId, role);
-
-  console.log("--- DEBUG: Service berhasil mengembalikan data, mengirim response ---");
+  const stats = await getDashboardStatsService(
+    userId, 
+    role,
+    filter as "day" | "month" | "year",
+    eventId ? Number(eventId) : undefined
+  );
 
   res.status(200).send({
     success: true,

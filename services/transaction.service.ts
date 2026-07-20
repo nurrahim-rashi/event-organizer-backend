@@ -301,3 +301,38 @@ export const getTransactionByIdService = async (
 
   throw new Error("Unauthorized: You do not have access to this transaction");
 };
+
+export const getIncomingTransactionService = async (eventId: number, userId: number) => {
+  const eventCheck = await prisma.event.findFirst({
+    where: {
+      id: eventId,
+      organizerId: userId,
+    },
+  });
+
+  if (!eventCheck) {
+    throw new Error("Unauthorized or Event not found");
+  }
+
+  return await prisma.transaction.findMany({
+    where: {
+      eventId: eventId,
+    },
+
+    select: {
+      id: true,
+      totalPrice: true,
+      status: true,
+      paymentProof: true,
+      createdAt: true,
+      event: {
+        select: {
+          name: true
+        },
+      },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+};

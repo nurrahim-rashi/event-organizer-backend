@@ -7,7 +7,10 @@ import {
   getActiveTransactionService,
   getAllTransactionsService,
   getTransactionByIdService,
+  getIncomingTransactionService,
 } from "../services/transaction.service.js";
+import { AuthenticatedRequest } from "../middlewares/auth.middleware.js";
+import { success } from "zod";
 
 // 1. Controller untuk membuat transaksi
 export const createTransactionController = async (
@@ -102,4 +105,15 @@ export const getTransactionByIdController = async (
 
   const result = await getTransactionByIdService(transactionId, userId);
   res.status(200).send({ data: result });
+};
+
+export const getIncomingTransactionController = async (req: Request, res: Response) => {
+  const authReq = req as AuthenticatedRequest;
+  
+  const eventId = Number(authReq.params.eventId);
+  const userId = Number(authReq.user.id);
+
+  const incomingTransactions = await getIncomingTransactionService(eventId, userId);
+
+  res.status(200).send({success: true, data: incomingTransactions,});
 };

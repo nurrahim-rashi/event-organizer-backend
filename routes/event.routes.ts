@@ -1,6 +1,7 @@
 import express from "express";
 import { upload } from "../middlewares/multer.js";
 import * as eventController from "../controllers/event.controller.js";
+import { verifyRole, verifyToken } from "../middlewares/auth.middleware.js";
 
 export const eventRoutes = express.Router();
 
@@ -19,4 +20,10 @@ eventRoutes.patch(
 // Route GET tidak butuh multer
 eventRoutes.get("/", eventController.getEventsController);
 eventRoutes.get("/:id", eventController.getEventController);
+eventRoutes.get(
+  "/:id/attendees", 
+  verifyToken(process.env.JWT_SECRET!),
+  verifyRole(["ADMIN", "SUPERADMIN"]), 
+  eventController.getEventAttendeeController
+);
 eventRoutes.delete("/:id", eventController.deleteEventController);
