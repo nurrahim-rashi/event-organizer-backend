@@ -11,6 +11,7 @@ import { organizerRoutes } from "./routes/organizer.routes.js";
 import { transactionRoutes } from "./routes/transaction.routes.js";
 import { transactionCron } from "./scripts/transaction.js";
 import { reminderCron } from "./scripts/reminder.js";
+import { reviewRoutes } from "./routes/review.routes.js";
 
 import cors from "cors";
 
@@ -31,6 +32,7 @@ app.use("/tickets", ticketRoutes);
 app.use("/dashboard", dashboardRoutes);
 app.use("/organizers", organizerRoutes);
 app.use("/transactions", transactionRoutes);
+app.use("/reviews", reviewRoutes);
 
 //errors
 app.use(globalError);
