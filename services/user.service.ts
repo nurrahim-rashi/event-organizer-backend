@@ -48,13 +48,26 @@ export const getUserService = async (id: number) => {
     throw new ApiError("User not found!", 404);
   }
 
-  const pointsData = await getUserPointsService(id);
-  const totalPoints = pointsData ? pointsData.totalPoints : 0;
+  const pointsAggregate = await prisma.referralUsage.aggregate({
+    _sum: {
+      pointsEarned: true,
+    },
+    where: {
+      referrerId: id,
+      isPointUsed: false,
+      expiredAt: {
+        gt: currentDate,
+      },
+    },
+  });
 
+  const activePoints = pointsAggregate._sum.pointsEarned || 0;
+
+  const {password, ...userWithoutPassword} = user;
 
   return {
-    ...user,
-    totalPoints,
+    ...userWithoutPassword,
+    activePoints,
   };
 };
 

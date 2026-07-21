@@ -24,14 +24,65 @@ export const registerService = async (body: RegisterSchema) => {
   const generatedReferralCode =
     "REF-" + Math.random().toString(36).substring(2, 8).toUpperCase();
 
-  await prisma.user.create({
-    data: {
-      name: body.name,
-      email: body.email,
-      password: hashedPassword,
-      role: (body.role as Role) || Role.USER,
-      referralCode: generatedReferralCode,
-    },
+  const rawCode = body.referredByCode
+  const usedReferralCode = rawCode && rawCode.trim() !== "" ? rawCode.trim().toUpperCase() : null;
+
+  console.log("==========================================");
+  console.log("1. Data Body Diterima:", body);
+  console.log("2. Kode Referral Hasil Extract:", usedReferralCode);
+  console.log("==========================================");
+  
+  const expiredAt = new Date();
+  expiredAt.setMonth(expiredAt.getMonth() + 3);
+
+  await prisma.$transaction(async (tx) => {
+    const newUser = await tx.user.create({
+      data: {
+        name: body.name,
+        email: body.email,
+        password: hashedPassword,
+        role: (body.role as Role) || Role.USER,
+        referralCode: generatedReferralCode,
+      },
+    });
+
+    if (usedReferralCode) {
+      console.log("3. Mencari Referrer dengan kode:", usedReferralCode);
+
+      const referrer = await tx.user.findUnique({
+        where: {
+          referralCode: usedReferralCode
+        },
+      });
+
+      if (referrer) {
+        console.log("4. ✅ Referrer DITEMUKAN! Email:", referrer.email);
+
+        await tx.referralUsage.create({
+          data: {
+            referrerId: referrer.id,
+            referredId: newUser.id,
+            pointsEarned: 10000,
+            expiredAt: expiredAt,
+            isPointUsed: false,
+          },
+        });
+
+        await tx.coupon.create({
+          data: {
+            userId: newUser.id,
+            discount: 10000,
+            expiredAt: expiredAt,
+          },
+        });
+
+        console.log("5. 🎉 Poin & Kupon BERHASIL disimpan ke Database!");
+      } else {
+        console.log("4. ❌ Referrer TIDAK DITEMUKAN untuk kode:", usedReferralCode);
+      }
+    } else {
+      console.log("3. ⚠️ Tidak ada kode referral yang dimasukkan.");
+    }
   });
 
   return { message: "Register success" };
