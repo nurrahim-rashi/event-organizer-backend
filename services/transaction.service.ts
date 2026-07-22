@@ -2,6 +2,7 @@ import { prisma } from "../lib/prisma.js";
 import { ApiError } from "../utils/api-error.js";
 import type { CreateTransactionSchema } from "../validators/transaction.validator.js";
 import { TransactionStatus } from "../generated/prisma/enums.js";
+import { sendMail } from "../lib/mail.js";
 
 export const createTransactionService = async (
   body: CreateTransactionSchema,
@@ -335,4 +336,108 @@ export const getIncomingTransactionService = async (eventId: number, userId: num
       createdAt: "desc",
     },
   });
+};
+
+export const updateTransactionStatusService = async (
+  transactionId: number,
+  status: "DONE" | "REJECTED",
+) => {
+  const processResult = await prisma.$transaction(async (tx) => {
+    const transaction = await tx.transaction.findUnique({
+      where: { id: transactionId },
+      include: {
+        items: true,
+        user: true,
+        event: true,
+      },
+    });
+
+    if (!transaction) {
+      throw new ApiError("Transaction not found", 404);
+    }
+
+    if (
+      transaction.status !== TransactionStatus.WAITING_CONFIRMATION &&
+      transaction.status !== TransactionStatus.WAITING_PAYMENT
+    ) {
+      throw new ApiError("Cannot change status of this transaction", 400);
+    }
+
+    const updateData: {
+      status: TransactionStatus;
+      couponId?: null;
+      voucherId?: null;
+    } = {
+      status: status as TransactionStatus,
+    };
+
+    if (status === "REJECTED") {
+      if (transaction.couponId) updateData.couponId = null;
+      if (transaction.voucherId) updateData.voucherId = null;
+    }
+
+    // Update Status Transaksi
+    const updatedTransaction = await tx.transaction.update({
+      where: { id: transactionId },
+      data: updateData,
+    });
+
+    // Logika Restore Aset jika REJECTED
+    if (status === "REJECTED") {
+      // A. Restore Poin User
+      if (transaction.pointUsed && transaction.pointUsed > 0) {
+        await tx.user.update({
+          where: { id: transaction.userId },
+          data: {
+            points: { increment: transaction.pointUsed },
+          },
+        });
+      }
+
+      // B. Restore Seats / Quota Tiket
+      for (const item of transaction.items) {
+        await tx.ticketType.update({
+          where: { id: item.ticketTypeId },
+          data: {
+            booked: { decrement: item.qty },
+          },
+        });
+      }
+    }
+
+    return {
+      ...updatedTransaction,
+      user: transaction.user,
+      event: transaction.event,
+    };
+  });
+
+  // 2. Pengiriman Email Notifikasi (Di luar Prisma Transaction)
+  try {
+    const { user, event } = processResult;
+    const isAccepted = status === "DONE";
+
+    const subject = isAccepted ? `[CONFIRMED] Ticket Booking: ${event.name}` : `[REJECTED] Transaction Cancellation: ${event.name}`;
+
+    await sendMail({
+      to: user.email,
+      subject,
+      templateName: "transaction-status.hbs",
+      context: {
+        userName: user.name,
+        eventName: event.name,
+        isAccepted
+      },
+    });
+
+    console.log(`[Email Notification] Successfully sent status '${status}' to ${user.email} for event '${event.name}'`);
+  } catch (error) {
+    // Pengiriman email gagal tidak membatalkan transaksi DB yang sudah berhasil
+    console.error("Failed to send notification email:", error);
+  }
+
+  return {
+    message: `Transaction #${processResult.id} status successfully updated to ${status}`,
+    data: processResult,
+  };
 };

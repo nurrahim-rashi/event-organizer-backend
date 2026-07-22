@@ -8,9 +8,11 @@ import {
   getAllTransactionsService,
   getTransactionByIdService,
   getIncomingTransactionService,
+  updateTransactionStatusService,
 } from "../services/transaction.service.js";
 import { AuthenticatedRequest } from "../middlewares/auth.middleware.js";
 import { success } from "zod";
+import { ApiError } from "../utils/api-error.js";
 
 // 1. Controller untuk membuat transaksi
 export const createTransactionController = async (
@@ -116,4 +118,29 @@ export const getIncomingTransactionController = async (req: Request, res: Respon
   const incomingTransactions = await getIncomingTransactionService(eventId, userId);
 
   res.status(200).send({success: true, data: incomingTransactions,});
+};
+
+export const updateTransactionStatusController = async (
+  req: Request,
+  res: Response,
+) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  const transactionId = Number(id);
+  if (isNaN(transactionId)) {
+    throw new ApiError ("Invalid Transaction ID", 400);
+  }
+
+  if (!status || !["DONE", "REJECTED"].includes(status)) {
+    throw new ApiError("Status must be either 'DONE' or 'REJECTED'", 400);
+  }
+
+  const result = await updateTransactionStatusService(transactionId, status);
+
+  return res.status(200).json({
+    success: true,
+    message: result.message,
+    data: result.data,
+  });
 };
