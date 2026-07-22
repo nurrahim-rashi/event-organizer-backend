@@ -8,6 +8,7 @@ import {
   getAllTransactionsController,
   getTransactionByIdController,
   getIncomingTransactionController,
+  updateTransactionStatusController,
 } from "../controllers/transaction.controller.js";
 import { verifyRole, verifyToken } from "../middlewares/auth.middleware.js";
 import { validate } from "../middlewares/validation.middleware.js";
@@ -48,6 +49,13 @@ transactionRoutes.patch(
   verifyToken(process.env.JWT_SECRET!),
   verifyRole(["USER", "ADMIN", "SUPERADMIN"]),
   cancelTransactionController,
+);
+
+transactionRoutes.patch(
+  "/:id/update",
+  verifyToken(process.env.JWT_SECRET!),
+  verifyRole(["ADMIN", "SUPERADMIN"]),
+  updateTransactionStatusController,
 );
 
 transactionRoutes.get(
