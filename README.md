@@ -29,7 +29,6 @@
 ## 🗄️ Database ERD
 
 ![alt text](image.png)
-![Database ERD](./prisma/ERD.png)
 
 ---
 
