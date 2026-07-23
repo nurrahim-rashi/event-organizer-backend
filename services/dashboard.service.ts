@@ -133,6 +133,8 @@ export const getDashboardStatsService = async (
     };
   } else {
     // 🌟 JIKA CUSTOMER BIASA
+    const now = new Date();
+
     const totalTicketsOwned = await prisma.transaction.count({
       where: {
         userId: userId,
@@ -140,8 +142,62 @@ export const getDashboardStatsService = async (
       },
     });
 
+    const activeEventsCount = await prisma.event.count({
+      where: {
+        deletedAt: null,
+        startDate: {gte: now},
+      },
+    });
+
+    const recommendedEvents = await prisma.event.findMany({
+      where: {
+        deletedAt: null,
+        startDate: {gte: now},
+        transactions: {
+          none: {
+            userId: userId,
+            status: "DONE",
+          },
+        },
+      },
+      take: 6,
+      orderBy: {
+        startDate: "asc",
+      },
+    });
+    
+    const upcomingTransactions = await prisma.transaction.findMany({
+      where: {
+        userId: userId,
+        status:"DONE",
+        event: {
+          deletedAt: null,
+          startDate: {gte: now},
+        },
+      },
+      include: {
+        event: true,
+      },
+      orderBy: {
+        event: {
+          startDate: "asc",
+        },
+      },
+    });
+
+    const upcomingEventsMap = new Map();
+    upcomingTransactions.forEach((tx) => {
+      if (tx.event && !upcomingEventsMap.has(tx.event.id)) {
+        upcomingEventsMap.set(tx.event.id, tx.event);
+      };
+    });
+    const upcomingEvents = Array.from(upcomingEventsMap.values());
+
     return {
       totalTicketsOwned,
+      activeEventsCount,
+      recommendedEvents,
+      upcomingEvents,
     };
   }
 };

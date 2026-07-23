@@ -9,10 +9,13 @@ cloudinary.config({
 
 export const cloudinaryUpload = (
   file: Express.Multer.File,
+  folderName: string = "uploads"
 ): Promise<UploadApiResponse> => {
   return new Promise((resolve, reject) => {
     const uploadStream = cloudinary.uploader.upload_stream(
-      { folder: "profile_pictures" },
+      { folder: folderName,
+        resource_type: "image",
+       },
       (error, result) => {
         if (error) return reject(error);
         resolve(result as UploadApiResponse);

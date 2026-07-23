@@ -9,10 +9,12 @@ import {
   getTransactionByIdService,
   getIncomingTransactionService,
   updateTransactionStatusService,
+  getTransactionsByEventService,
 } from "../services/transaction.service.js";
 import { AuthenticatedRequest } from "../middlewares/auth.middleware.js";
 import { success } from "zod";
 import { ApiError } from "../utils/api-error.js";
+import { cloudinaryUpload } from "../utils/cloudinary.js";
 
 // 1. Controller untuk membuat transaksi
 export const createTransactionController = async (
@@ -39,12 +41,12 @@ export const uploadPaymentController = async (req: Request, res: Response) => {
     return res.status(400).send({ message: "Payment proof is required" });
   }
 
-  const paymentProof = file.originalname;
+  const paymentProof = await cloudinaryUpload(file, "payment_proofs");
 
   const result = await uploadPaymentService(
     transactionId,
     userId,
-    paymentProof,
+    paymentProof.secure_url,
   );
 
   res.status(200).send({
@@ -103,10 +105,26 @@ export const getTransactionByIdController = async (
   res: Response,
 ) => {
   const transactionId = Number(req.params.id);
-  const userId = res.locals.user.id;
 
+  if (isNaN(transactionId) || transactionId <= 0) {
+    return res.status(400).json({
+      message: "Invalid transaction ID"
+    });
+  }
+
+  const userId = res.locals.user.id;
   const result = await getTransactionByIdService(transactionId, userId);
-  res.status(200).send({ data: result });
+  
+  if (!result){
+    return res.status(404).json({
+      message: "Transaction not found",
+    });
+  }
+
+  return res.status(200).json({
+    success: true,
+    data: result,
+  });
 };
 
 export const getIncomingTransactionController = async (req: Request, res: Response) => {
@@ -142,5 +160,19 @@ export const updateTransactionStatusController = async (
     success: true,
     message: result.message,
     data: result.data,
+  });
+};
+
+export const getTransactionsByEventController = async (
+  req: Request,
+  res: Response
+) => {
+  const { eventId } = req.params;
+
+  const data = await getTransactionsByEventService(Number(eventId));
+
+  return res.status(200).send({
+    message: "Get transactions by event successfully",
+    data,
   });
 };

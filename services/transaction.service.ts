@@ -441,3 +441,13 @@ export const updateTransactionStatusService = async (
     data: processResult,
   };
 };
+
+export const getTransactionsByEventService = async (eventId: number) => {
+  const transactions = await prisma.transaction.findMany({
+    where: {
+      eventId: eventId,
+    },
+  });
+
+  return transactions;
+};
