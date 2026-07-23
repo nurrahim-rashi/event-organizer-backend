@@ -1,37 +1,52 @@
+import { Prisma } from "../generated/prisma/client.js";
 import { prisma } from "../lib/prisma.js";
 import { ApiError } from "../utils/api-error.js";
-import { PaginationQueryParams } from "../validators/event.validator.js";
+import { PaginationQueryParams } from "../types/pagination.js";
 import { cloudinaryUpload } from "../utils/cloudinary.js";
+import { createEventSchema } from "../validators/event.validator.js";
+import { EventCategory } from "../generated/prisma/enums.js";
 
 export const getEventsService = async (query: PaginationQueryParams) => {
-  const { page, take, sortOrder, sortBy, search } = query;
-  const skip = (page - 1) * take;
+  const { page, take, sortOrder, sortBy, search, location, category } = query;
 
-  const whereClause: any = {
-    deletedAt: null,
-    ...(search && { name: { contains: search, mode: "insensitive" } }),
-  };
+  const whereClause: Prisma.EventWhereInput = {};
 
-  const orderByClause = { [sortBy]: sortOrder };
+  if (search) {
+    whereClause.name = { contains: search, mode: "insensitive" };
+  }
 
-  const [events, totalItems] = await prisma.$transaction([
-    prisma.event.findMany({
-      where: whereClause,
-      orderBy: orderByClause,
-      skip,
-      take,
-      include: { ticketTypes: true },
-    }),
-    prisma.event.count({ where: whereClause }),
-  ]);
+  if (location) {
+    whereClause.location = { contains: location, mode: "insensitive" };
+  }
+
+  if (category) {
+    const categoryArray = category.split(",") as EventCategory[];
+    whereClause.category = { in: categoryArray };
+  }
+
+  whereClause.deletedAt = null;
+
+  const pageNumber = Number(page) || 1;
+  const takeNumber = Number(take) || 8;
+
+  const events = await prisma.event.findMany({
+    where: whereClause,
+    include: {
+      ticketTypes: true,
+    },
+    skip: (pageNumber - 1) * takeNumber,
+    take: takeNumber,
+    orderBy: { [sortBy]: sortOrder },
+  });
+
+  const total = await prisma.event.count({ where: whereClause });
 
   return {
     data: events,
     meta: {
-      currentPage: page,
-      limit: take,
-      totalItems,
-      totalPages: Math.ceil(totalItems / take),
+      page: pageNumber,
+      take: takeNumber,
+      total: total,
     },
   };
 };
@@ -73,7 +88,6 @@ export const createEventService = async (
   body: any,
   file?: Express.Multer.File,
 ) => {
-  // Pastikan bannerImageUrl diinisialisasi dengan aman
   let bannerImageUrl = "";
 
   if (file) {
@@ -109,7 +123,7 @@ export const updateEventService = async (
 ) => {
   const event = await prisma.event.findFirst({
     where: { id, deletedAt: null },
-    include: { ticketTypes: true }, // Pastikan include ticketTypes
+    include: { ticketTypes: true },
   });
 
   if (!event) throw new ApiError("Event not found!", 404);

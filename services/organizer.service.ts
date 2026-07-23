@@ -1,6 +1,7 @@
 import { prisma } from "../lib/prisma.js";
 
 export const getOrganizerProfileData = async (organizerId: number) => {
+  // 1. Ambil data organizer dan event-nya
   const organizerData = await prisma.user.findUnique({
     where: { id: organizerId },
     select: {
@@ -15,8 +16,24 @@ export const getOrganizerProfileData = async (organizerId: number) => {
           id: true,
           name: true,
           startDate: true,
+          endDate: true, // WAJIB ada untuk logika isPastEvent di EventCard
           location: true,
           bannerImage: true,
+          ticketTypes: {
+            select: {
+              id: true,
+              price: true,
+              totalTicket: true,
+              booked: true,
+            },
+          },
+        },
+        // Opsional: Filter agar event yang deletedAt tidak ikut tampil
+        where: {
+          deletedAt: null,
+        },
+        orderBy: {
+          startDate: "desc",
         },
       },
     },
@@ -29,6 +46,7 @@ export const getOrganizerProfileData = async (organizerId: number) => {
   const events = organizerData.organizedEvents;
   const eventIds = events.map((e) => e.id);
 
+  // 2. Ambil ulasan jika ada event yang dimiliki
   let reviews: any[] = [];
   if (eventIds.length > 0) {
     reviews = await prisma.review.findMany({
@@ -60,6 +78,7 @@ export const getOrganizerProfileData = async (organizerId: number) => {
     });
   }
 
+  // 3. Kalkulasi statistik rating
   const totalReviews = reviews.length;
   const averageRating =
     totalReviews > 0
@@ -73,6 +92,7 @@ export const getOrganizerProfileData = async (organizerId: number) => {
     2: 0,
     1: 0,
   };
+
   reviews.forEach((r) => {
     if (distributionMap[r.rating] !== undefined) distributionMap[r.rating]++;
   });
@@ -84,6 +104,7 @@ export const getOrganizerProfileData = async (organizerId: number) => {
     return { stars, percentage };
   });
 
+  // 4. Return data terstruktur
   return {
     organizer: {
       id: organizerData.id,

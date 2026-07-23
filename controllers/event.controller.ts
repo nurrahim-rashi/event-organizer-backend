@@ -7,13 +7,13 @@ import {
   deleteEventService,
   getEventAttendeeService,
 } from "../services/event.service.js";
-import { paginationQuerySchema } from "../validators/event.validator.js";
+import { baseQuery } from "../utils/query.js";
 import { ApiError } from "../utils/api-error.js";
 
 export const getEventsController = async (req: Request, res: Response) => {
-  const query = paginationQuerySchema.parse(req.query);
+  const query = baseQuery(req);
   const result = await getEventsService(query);
-  res.status(200).json(result);
+  res.status(200).send(result);
 };
 
 export const getEventController = async (req: Request, res: Response) => {
