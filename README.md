@@ -28,9 +28,8 @@
 
 ## 🗄️ Database ERD
 
-_(Masukkan gambar ERD Anda di sini)_
-
-> `![Database ERD](./path-to-your-erd-image.png)`
+![alt text](image.png)
+![Database ERD](./prisma/ERD.png)
 
 ---
 
@@ -47,7 +46,6 @@ _(Masukkan gambar ERD Anda di sini)_
 ```bash
 cd backend
 cp .env.example .env
-# Sesuaikan DATABASE_URL dan CLOUDINARY_URL di .env
 npm install
 npx prisma db push
 npm run dev
@@ -59,7 +57,6 @@ npm run dev
 ```bash
 cd ../frontend
 cp .env.example .env
-# Sesuaikan VITE_API_URL di .env
 npm install
 npm run dev
 
@@ -70,7 +67,7 @@ npm run dev
 ## 🌐 Deployment URLs
 
 - **Frontend**: [Klik di sini](https://www.google.com/search?q=%23)
-- **Backend**: [Klik di sini](https://www.google.com/search?q=%23)
+- **Backend**: [Klik di sini](event-organizer-backend-production-8c08.up.railway.app)
 
 ---
 
