@@ -1,7 +1,7 @@
 import { prisma } from "../lib/prisma.js";
 import { ApiError } from "../utils/api-error.js";
 import type { CreateTransactionSchema } from "../validators/transaction.validator.js";
-import { TransactionStatus } from "../generated/prisma/enums.js";
+import { TransactionStatus } from "../generated/prisma/client.js";
 import { sendMail } from "../lib/mail.js";
 
 export const createTransactionService = async (
@@ -303,7 +303,10 @@ export const getTransactionByIdService = async (
   throw new Error("Unauthorized: You do not have access to this transaction");
 };
 
-export const getIncomingTransactionService = async (eventId: number, userId: number) => {
+export const getIncomingTransactionService = async (
+  eventId: number,
+  userId: number,
+) => {
   const eventCheck = await prisma.event.findFirst({
     where: {
       id: eventId,
@@ -328,7 +331,7 @@ export const getIncomingTransactionService = async (eventId: number, userId: num
       createdAt: true,
       event: {
         select: {
-          name: true
+          name: true,
         },
       },
     },
@@ -417,7 +420,9 @@ export const updateTransactionStatusService = async (
     const { user, event } = processResult;
     const isAccepted = status === "DONE";
 
-    const subject = isAccepted ? `[CONFIRMED] Ticket Booking: ${event.name}` : `[REJECTED] Transaction Cancellation: ${event.name}`;
+    const subject = isAccepted
+      ? `[CONFIRMED] Ticket Booking: ${event.name}`
+      : `[REJECTED] Transaction Cancellation: ${event.name}`;
 
     await sendMail({
       to: user.email,
@@ -426,11 +431,13 @@ export const updateTransactionStatusService = async (
       context: {
         userName: user.name,
         eventName: event.name,
-        isAccepted
+        isAccepted,
       },
     });
 
-    console.log(`[Email Notification] Successfully sent status '${status}' to ${user.email} for event '${event.name}'`);
+    console.log(
+      `[Email Notification] Successfully sent status '${status}' to ${user.email} for event '${event.name}'`,
+    );
   } catch (error) {
     // Pengiriman email gagal tidak membatalkan transaksi DB yang sudah berhasil
     console.error("Failed to send notification email:", error);

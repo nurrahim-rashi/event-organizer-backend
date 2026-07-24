@@ -4,7 +4,7 @@ import { ApiError } from "../utils/api-error.js";
 import { PaginationQueryParams } from "../types/pagination.js";
 import { cloudinaryUpload } from "../utils/cloudinary.js";
 import { createEventSchema } from "../validators/event.validator.js";
-import { EventCategory } from "../generated/prisma/enums.js";
+import { EventCategory } from "../generated/prisma/client.js";
 
 export const getEventsService = async (query: PaginationQueryParams) => {
   const { page, take, sortOrder, sortBy, search, location, category } = query;
