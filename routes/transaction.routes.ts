@@ -9,6 +9,7 @@ import {
   getTransactionByIdController,
   getIncomingTransactionController,
   updateTransactionStatusController,
+  getTransactionsByEventController,
 } from "../controllers/transaction.controller.js";
 import { verifyRole, verifyToken } from "../middlewares/auth.middleware.js";
 import { validate } from "../middlewares/validation.middleware.js";
@@ -84,6 +85,12 @@ transactionRoutes.get(
   verifyToken(process.env.JWT_SECRET!),
   verifyRole(["ADMIN", "SUPERADMIN"]), // Hanya boleh diakses Admin/EO
   getIncomingTransactionController,
+);
+
+transactionRoutes.get(
+  "/event/:eventId",
+  verifyToken(process.env.JWT_SECRET!),
+  getTransactionsByEventController
 );
 
 export { transactionRoutes };
