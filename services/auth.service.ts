@@ -9,7 +9,7 @@ import {
   ResetPasswordSchema,
 } from "../validators/auth.validator.js";
 import { sendMail } from "../lib/mail.js";
-import { Role } from "../generated/prisma/enums.js";
+import { Role } from "../generated/prisma/client.js";
 
 export const registerService = async (body: RegisterSchema) => {
   const existingUser = await prisma.user.findUnique({
@@ -24,14 +24,15 @@ export const registerService = async (body: RegisterSchema) => {
   const generatedReferralCode =
     "REF-" + Math.random().toString(36).substring(2, 8).toUpperCase();
 
-  const rawCode = body.referredByCode
-  const usedReferralCode = rawCode && rawCode.trim() !== "" ? rawCode.trim().toUpperCase() : null;
+  const rawCode = body.referredByCode;
+  const usedReferralCode =
+    rawCode && rawCode.trim() !== "" ? rawCode.trim().toUpperCase() : null;
 
   console.log("==========================================");
   console.log("1. Data Body Diterima:", body);
   console.log("2. Kode Referral Hasil Extract:", usedReferralCode);
   console.log("==========================================");
-  
+
   const expiredAt = new Date();
   expiredAt.setMonth(expiredAt.getMonth() + 3);
 
@@ -51,7 +52,7 @@ export const registerService = async (body: RegisterSchema) => {
 
       const referrer = await tx.user.findUnique({
         where: {
-          referralCode: usedReferralCode
+          referralCode: usedReferralCode,
         },
       });
 
@@ -78,7 +79,10 @@ export const registerService = async (body: RegisterSchema) => {
 
         console.log("5. 🎉 Poin & Kupon BERHASIL disimpan ke Database!");
       } else {
-        console.log("4. ❌ Referrer TIDAK DITEMUKAN untuk kode:", usedReferralCode);
+        console.log(
+          "4. ❌ Referrer TIDAK DITEMUKAN untuk kode:",
+          usedReferralCode,
+        );
       }
     } else {
       console.log("3. ⚠️ Tidak ada kode referral yang dimasukkan.");
