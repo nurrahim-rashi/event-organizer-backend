@@ -184,8 +184,3 @@ enum TicketName {
   BRONZE
   EARLY_BIRD
 }
-
-generator erd {
-  provider = "prisma-erd-generator"
-  output = "ERD.png"
-}
