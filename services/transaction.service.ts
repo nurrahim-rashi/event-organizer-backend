@@ -318,6 +318,7 @@ export const getIncomingTransactionService = async (eventId: number, userId: num
   return await prisma.transaction.findMany({
     where: {
       eventId: eventId,
+      status: "WAITING_CONFIRMATION",
     },
 
     select: {
