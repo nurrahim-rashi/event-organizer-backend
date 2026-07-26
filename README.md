@@ -73,14 +73,14 @@ npm run dev
 ## 🌐 Deployment URLs
 
 - **Frontend**: [Klik di sini](https://event-organizer-omega.vercel.app/)
-- **Backend**: [Klik di sini](https://event-organizer-backend-ten.vercel.app/)
+- **Backend**: [Klik di sini](https://event-organizer-backend-production-110e.up.railway.app/)
 
 ---
 
 ## 🔑 Demo Accounts
 
-| Role           | Email                   | Password      |
-| -------------- | ----------------------- | ------------- |
-| **Superadmin** | `admin@example.com`     | `password123` |
-| **Organizer**  | `organizer@example.com` | `password123` |
-| **User**       | `user@example.com`      | `password123` |
+| Role           | Email                    | Password      |
+| -------------- | ------------------------ | ------------- |
+| **Superadmin** | `superadmin@yopmail.com` | `P@ssword123` |
+| **Organizer**  | `organizer@yopmail.com`  | `P@ssword123` |
+| **User**       | `cheri@yopmail.com`      | `P@ssword123` |
