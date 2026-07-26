@@ -65,8 +65,8 @@ npm run dev
 
 ## 🌐 Deployment URLs
 
-- **Frontend**: [Klik di sini](https://event-organizer-omega.vercel.app)
-- **Backend**: [Klik di sini](event-organizer-backend-production-8c08.up.railway.app)
+- **Frontend**: [Klik di sini](https://event-organizer-omega.vercel.app/)
+- **Backend**: [Klik di sini](https://event-organizer-backend-ten.vercel.app/)
 
 ---
 
