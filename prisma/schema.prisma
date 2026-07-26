@@ -185,7 +185,7 @@ enum TicketName {
   EARLY_BIRD
 }
 
-generator erd {
-  provider = "prisma-erd-generator"
-  output = "ERD.png"
-}
+// generator erd {
+//   provider = "prisma-erd-generator"
+//   output = "ERD.png"
+// }

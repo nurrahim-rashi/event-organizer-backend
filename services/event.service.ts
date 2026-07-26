@@ -134,8 +134,13 @@ export const updateEventService = async (
     bannerImageUrl = uploadResult.secure_url;
   }
 
+  // Ambil semua ID tiket yang dikirim dari frontend (hanya yang punya ID)
+  const incomingTicketIds = (body.ticketTypes || [])
+    .filter((t: any) => t.id)
+    .map((t: any) => t.id);
+
   return await prisma.$transaction(async (tx) => {
-    // Update data event dasar
+    // 1. Update data event dasar
     const updatedEvent = await tx.event.update({
       where: { id },
       data: {
@@ -149,7 +154,15 @@ export const updateEventService = async (
       },
     });
 
-    // Update TicketTypes secara satu-persatu (Upsert)
+    // 2. HAPUS tiket yang ada di DB tapi TIDAK ADA di payload baru
+    await tx.ticketType.deleteMany({
+      where: {
+        eventId: id,
+        id: { notIn: incomingTicketIds },
+      },
+    });
+
+    // 3. Upsert tiket (Update yang ada, Create yang baru)
     if (body.ticketTypes && Array.isArray(body.ticketTypes)) {
       for (const ticket of body.ticketTypes) {
         if (ticket.id) {
@@ -158,15 +171,17 @@ export const updateEventService = async (
             where: { id: ticket.id },
             data: {
               name: ticket.name,
-              price: ticket.price,
-              totalTicket: ticket.totalTicket,
+              price: Number(ticket.price),
+              totalTicket: Number(ticket.totalTicket),
             },
           });
         } else {
           // Buat baru jika tidak ada id
           await tx.ticketType.create({
             data: {
-              ...ticket,
+              name: ticket.name,
+              price: Number(ticket.price),
+              totalTicket: Number(ticket.totalTicket),
               eventId: id,
             },
           });
