@@ -11,12 +11,5 @@
       "src": "/(.*)",
       "dest": "index.ts"
     }
-  ], [{
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "index.ts"
-    }
   ]
-}]
 }
