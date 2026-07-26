@@ -26,6 +26,13 @@
 
 ---
 
+## 🗃️ Repositories
+
+- **Frontend**: [Klik di sini](https://github.com/nurrahim-rashi/event-organizer)
+- **Backend**: [Klik di sini](https://github.com/nurrahim-rashi/event-organizer-backend/)
+
+---
+
 ## 🗄️ Database ERD
 
 ![alt text](image.png)
@@ -65,8 +72,8 @@ npm run dev
 
 ## 🌐 Deployment URLs
 
-- **Frontend**: [Klik di sini](https://event-organizer-omega.vercel.app)
-- **Backend**: [Klik di sini](event-organizer-backend-production-8c08.up.railway.app)
+- **Frontend**: [Klik di sini](https://event-organizer-omega.vercel.app/)
+- **Backend**: [Klik di sini](https://event-organizer-backend-ten.vercel.app/)
 
 ---
 
