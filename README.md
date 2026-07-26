@@ -26,6 +26,13 @@
 
 ---
 
+## 🗃️ Repositories
+
+- **Frontend**: [Klik di sini](https://github.com/nurrahim-rashi/event-organizer)
+- **Backend**: [Klik di sini](https://github.com/nurrahim-rashi/event-organizer-backend/)
+
+---
+
 ## 🗄️ Database ERD
 
 ![alt text](image.png)
