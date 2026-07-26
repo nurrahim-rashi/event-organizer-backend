@@ -1,21 +1,20 @@
-import { Role } from "../generated/prisma/enums.js";
+import { Role } from "../generated/prisma/client.js";
 import { prisma } from "../lib/prisma.js";
 import { ApiError } from "../utils/api-error.js";
-import { getUserPointsService } from "./point.service.js";
 import { cloudinaryUpload } from "../utils/cloudinary.js";
 
 type CreateUserBody = {
   name: string;
   email: string;
   password: string;
-  role?: Role; 
+  role?: Role;
 };
 
 type UpdateUserBody = {
   name?: string;
   email?: string;
   password?: string;
-  profilePic? : string;
+  profilePic?: string;
 };
 
 type DeleteUserResponse = {
@@ -63,7 +62,7 @@ export const getUserService = async (id: number) => {
 
   const activePoints = pointsAggregate._sum.pointsEarned || 0;
 
-  const {password, ...userWithoutPassword} = user;
+  const { password, ...userWithoutPassword } = user;
 
   return {
     ...userWithoutPassword,

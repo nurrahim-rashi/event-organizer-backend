@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { ApiError } from "../utils/api-error.js";
-import { Role } from "../generated/prisma/enums.js";
+import { Role } from "../generated/prisma/client.js";
 
 export interface MaybeAuthenticatedRequest extends Request {
   user?: {
@@ -34,7 +34,11 @@ export const verifyToken = (secretKey: string) => {
         id: number;
         role: Role;
       };
-      console.log("--- DEBUG: Token berhasil diverifikasi untuk user:", decoded.id, " ---");
+      console.log(
+        "--- DEBUG: Token berhasil diverifikasi untuk user:",
+        decoded.id,
+        " ---",
+      );
       res.locals.user = { id: decoded.id, role: decoded.role };
 
       (req as AuthenticatedRequest).user = {
