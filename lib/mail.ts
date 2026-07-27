@@ -2,18 +2,9 @@ import fs from "fs/promises";
 import Handlebars from "handlebars";
 import path, {dirname} from "node:path";
 import { fileURLToPath } from "node:url";
-import { createTransport } from "nodemailer";
+import { Resend } from "resend";
 
-const transporter = createTransport({
-    host: "smtp.gmail.com",
-    port: 587,
-    secure: false,
-    auth: {
-        user: process.env.MAIL_USER,
-        pass: process.env.MAIL_PASS,
-    },
-    connectionTimeout: 10000,
-});
+const resend = new Resend(process.env.RESEND_API_KEY)
 
 export const sendMail = async ({
     to,
@@ -35,14 +26,18 @@ export const sendMail = async ({
     const templateSource = await fs.readFile(templatePath, "utf-8");
     const html = Handlebars.compile(templateSource)(context);
     
-    await transporter.sendMail({
-        from: `"My Event" <${process.env.MAIL_USER}>`,
-        to: to,
-        subject: subject,
-        html: html,
+    const { data, error } = await resend.emails.send({
+      from: "My Event <onboarding@resend.dev>",
+      to: [to],
+      subject: subject,
+      html: html,
     });
 
-    console.log(`Email successfully sent to ${to}`);
+    if (error) {
+        throw new Error(JSON.stringify(error));
+    }
+
+    console.log(`Email successfully sent to ${to}:`, data);
     }
 
     catch (error) {
