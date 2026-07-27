@@ -4,7 +4,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "build": "npx prisma generate && tsc",
+    "build": "npx prisma generate && tsc && copyfiles templates/**/* dist",
     "start": "node dist/index.js",
     "dev": "tsx watch index.ts"
   },
@@ -21,6 +21,7 @@
     "@types/node": "^26.0.1",
     "@types/node-cron": "^3.0.11",
     "@types/pg": "^8.20.0",
+    "copyfiles": "^2.4.1",
     "cors": "^2.8.6",
     "prisma": "^7.9.0",
     "prisma-erd-generator": "^2.4.4",
