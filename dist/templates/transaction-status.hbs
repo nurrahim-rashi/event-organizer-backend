@@ -1,0 +1,20 @@
+<div style="font-family: Arial, sans-serif; padding: 20px; color: #333; max-width: 600px; border: 1px solid #eee; border-radius: 10px;">
+  <h2 style="color: #4B0082;">Hello {{userName}},</h2>
+  <p>The status of your transaction for event <strong>{{eventName}}</strong> has been updated.</p>
+  
+  <div style="padding: 15px; border-radius: 8px; background-color: {{#if isAccepted}}#e6fffa{{else}}#ffebe9{{/if}}; margin: 20px 0;">
+    <h3 style="margin: 0; color: {{#if isAccepted}}#047857{{else}}#c53030{{/if}};">
+      Transaction Status: {{#if isAccepted}}ACCEPTED{{else}}REJECTED{{/if}}
+    </h3>
+  </div>
+
+  {{#if isAccepted}}
+    <p>Congratulations! Your payment has been confirmed. Your ticket is now active and can be accessed from your profile page.</p>
+  {{else}}
+    <p>We regret to inform you that your transaction could not be processed. If you used points, coupons, or vouchers for this order, those assets have been <strong>automatically returned</strong> to your account.</p>
+  {{/if}}
+
+  <br />
+  <hr style="border: none; border-top: 1px solid #eee;" />
+  <p style="font-size: 12px; color: #777;">Best regards,<br /><strong>Event Organizer Team</strong></p>
+</div>
